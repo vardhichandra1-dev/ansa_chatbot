@@ -1,10 +1,10 @@
 from app.models.analytics import CompanyPrep, TopicPerformance, UserAnalytics
 from app.models.interview import Answer, Interview, InterviewQuestion, MockSession
+from app.models.profile import Profile
 from app.models.resume import Resume
-from app.models.user import User
 
 __all_models__ = [
-    User,
+    Profile,
     Resume,
     Interview,
     InterviewQuestion,
@@ -16,7 +16,7 @@ __all_models__ = [
 ]
 
 __all__ = [
-    "User",
+    "Profile",
     "Resume",
     "Interview",
     "InterviewQuestion",

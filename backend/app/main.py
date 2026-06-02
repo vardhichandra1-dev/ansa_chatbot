@@ -1,20 +1,16 @@
 """
-AI Interview Copilot — FastAPI Application
-==========================================
-Intelligent interview preparation, coaching, transcription, and analytics platform.
+AI Interview Copilot — Personal Live Interview Assistant
+=========================================================
+Single-user, no authentication required.
+Primary feature: real-time live interview assistance via WebSocket.
 
-Architecture:
-    Next.js Frontend
-        ↓
-    FastAPI (this file)
-        ↓
-    LangGraph Orchestrator
-        ↓
-    Agent Layer (question detection, RAG, evaluation, analytics)
-        ↓
-    Vector DB (ChromaDB/Pinecone) + PostgreSQL
-        ↓
-    LLM Providers (Anthropic Claude / OpenAI)
+Quick start:
+  1. cp .env.example .env  (set ANTHROPIC_API_KEY + OPENAI_API_KEY)
+  2. docker-compose up
+  3. Upload your resume: POST /api/v1/resumes
+  4. Create an interview: POST /api/v1/interviews
+  5. Connect WebSocket:  ws://localhost:8000/api/v1/transcription/live/{interview_id}
+  6. Stream audio → get real-time transcription + question detection + answer guidance
 """
 from __future__ import annotations
 
@@ -27,7 +23,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import analytics, auth, interviews, mock_interview, resumes, transcription
+from app.routers import analytics, interviews, mock_interview, profile, resumes, transcription
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,26 +31,26 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting AI Interview Copilot API...")
+    logger.info("Starting AI Interview Copilot...")
     await create_tables()
-    logger.info("Database tables ready.")
+    logger.info("Database ready. Visit /docs to explore the API.")
     yield
-    logger.info("Shutting down AI Interview Copilot API.")
+    logger.info("Shutting down AI Interview Copilot.")
 
 
 app = FastAPI(
     title="AI Interview Copilot",
     description=(
-        "Intelligent interview preparation, coaching, transcription, and analytics platform "
-        "for software engineers and AI professionals."
+        "Personal live interview assistant — real-time transcription, "
+        "question detection, and AI-powered answer guidance."
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# ── Middleware ────────────────────────────────────────────────────────────────
+# ── Middleware ─────────────────────────────────────────────────────────────────
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,27 +61,36 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# ── Routers ───────────────────────────────────────────────────────────────────
+# ── Routers ────────────────────────────────────────────────────────────────────
 
-app.include_router(auth.router, prefix="/api/v1")
-app.include_router(resumes.router, prefix="/api/v1")
-app.include_router(interviews.router, prefix="/api/v1")
-app.include_router(transcription.router, prefix="/api/v1")
-app.include_router(mock_interview.router, prefix="/api/v1")
-app.include_router(analytics.router, prefix="/api/v1")
+API = "/api/v1"
+app.include_router(profile.router,          prefix=API)
+app.include_router(resumes.router,          prefix=API)
+app.include_router(interviews.router,       prefix=API)
+app.include_router(transcription.router,    prefix=API)
+app.include_router(mock_interview.router,   prefix=API)
+app.include_router(analytics.router,        prefix=API)
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
+# ── Health + root ──────────────────────────────────────────────────────────────
 
 @app.get("/health", tags=["health"])
 async def health():
-    return {"status": "ok", "service": "AI Interview Copilot", "version": "1.0.0"}
+    return {"status": "ok", "version": "2.0.0"}
 
 
 @app.get("/", tags=["root"])
 async def root():
     return {
-        "message": "AI Interview Copilot API",
+        "service": "AI Interview Copilot",
+        "version": "2.0.0",
         "docs": "/docs",
-        "version": "1.0.0",
+        "primary_feature": "WebSocket ws://localhost:8000/api/v1/transcription/live/{interview_id}",
+        "quick_start": {
+            "1_upload_resume":    "POST /api/v1/resumes",
+            "2_create_interview": "POST /api/v1/interviews",
+            "3_connect_ws":       "WS  /api/v1/transcription/live/{id}",
+            "4_stream_audio":     "Send binary audio chunks over WebSocket",
+            "5_get_guidance":     "GET /api/v1/transcription/guidance?question=...",
+        },
     }

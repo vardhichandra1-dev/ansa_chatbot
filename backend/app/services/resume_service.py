@@ -11,13 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.resume import Resume
-from app.models.user import User
 from app.services.vector_store_service import VectorStoreService
 
 
 async def save_resume(
     file: UploadFile,
-    user: User,
     db: AsyncSession,
     vector_store: VectorStoreService,
 ) -> Resume:
@@ -39,57 +37,61 @@ async def save_resume(
             detail=f"File exceeds {settings.max_upload_size_mb} MB limit",
         )
 
-    user_dir = settings.upload_path / str(user.id) / "resumes"
-    user_dir.mkdir(parents=True, exist_ok=True)
-    file_path = user_dir / f"{uuid.uuid4()}_{file.filename}"
+    resume_dir = settings.upload_path / "resumes"
+    resume_dir.mkdir(parents=True, exist_ok=True)
+    file_path = resume_dir / f"{uuid.uuid4()}_{file.filename}"
 
     async with aiofiles.open(file_path, "wb") as f:
         await f.write(content)
 
     parsed = _parse_file(file_path, file.content_type or "")
-    skills, experience, education = _extract_sections(parsed)
+    skills = _extract_skills(parsed)
 
     resume = Resume(
-        user_id=user.id,
         filename=file.filename or "resume",
         file_path=str(file_path),
         parsed_text=parsed,
         skills=json.dumps(skills),
-        experience=json.dumps(experience),
-        education=json.dumps(education),
+        is_active=True,
     )
     db.add(resume)
     await db.flush()
 
     doc_id = await vector_store.add_resume(
         resume_id=str(resume.id),
-        user_id=str(user.id),
         text=parsed,
         metadata={"skills": skills, "filename": file.filename},
     )
     resume.chroma_doc_id = doc_id
     await db.flush()
-
-    # Mark as primary if it's the first resume
-    result = await db.execute(
-        select(Resume).where(Resume.user_id == user.id, Resume.id != resume.id)
-    )
-    if not result.scalars().first():
-        resume.is_primary = True
-
     return resume
+
+
+async def get_resumes(db: AsyncSession) -> list[Resume]:
+    result = await db.execute(select(Resume).order_by(Resume.created_at.desc()))
+    return list(result.scalars().all())
+
+
+async def delete_resume(resume_id: uuid.UUID, db: AsyncSession) -> None:
+    result = await db.execute(select(Resume).where(Resume.id == resume_id))
+    resume = result.scalar_one_or_none()
+    if not resume:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
+    try:
+        Path(resume.file_path).unlink(missing_ok=True)
+    except OSError:
+        pass
+    await db.delete(resume)
 
 
 def _parse_file(path: Path, content_type: str) -> str:
     try:
         if content_type == "application/pdf" or str(path).endswith(".pdf"):
             import pdfplumber
-
             with pdfplumber.open(path) as pdf:
                 return "\n".join(page.extract_text() or "" for page in pdf.pages)
         elif "wordprocessingml" in content_type or str(path).endswith(".docx"):
             from docx import Document
-
             doc = Document(str(path))
             return "\n".join(para.text for para in doc.paragraphs)
         else:
@@ -101,42 +103,13 @@ def _parse_file(path: Path, content_type: str) -> str:
         ) from exc
 
 
-def _extract_sections(text: str) -> tuple[list[str], list[dict], list[dict]]:
-    """Simple section extractor — production version would use an LLM."""
-    lines = text.lower()
-    skills: list[str] = []
-    experience: list[dict] = []
-    education: list[dict] = []
-
-    skill_keywords = [
+def _extract_skills(text: str) -> list[str]:
+    keywords = [
         "python", "fastapi", "langchain", "langgraph", "rag", "llm", "openai",
         "anthropic", "pytorch", "tensorflow", "react", "typescript", "postgresql",
         "redis", "docker", "kubernetes", "aws", "gcp", "azure", "git",
         "vector database", "chroma", "pinecone", "whisper", "transformers",
+        "langraph", "crewai", "autogen", "llamaindex", "huggingface",
     ]
-    for kw in skill_keywords:
-        if kw in lines:
-            skills.append(kw)
-
-    return skills, experience, education
-
-
-async def get_user_resumes(user: User, db: AsyncSession) -> list[Resume]:
-    result = await db.execute(
-        select(Resume).where(Resume.user_id == user.id).order_by(Resume.created_at.desc())
-    )
-    return list(result.scalars().all())
-
-
-async def delete_resume(resume_id: uuid.UUID, user: User, db: AsyncSession) -> None:
-    result = await db.execute(
-        select(Resume).where(Resume.id == resume_id, Resume.user_id == user.id)
-    )
-    resume = result.scalar_one_or_none()
-    if not resume:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
-    try:
-        Path(resume.file_path).unlink(missing_ok=True)
-    except OSError:
-        pass
-    await db.delete(resume)
+    lower = text.lower()
+    return [kw for kw in keywords if kw in lower]
