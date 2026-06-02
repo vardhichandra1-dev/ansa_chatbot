@@ -13,15 +13,17 @@
 
 ## Live Meeting Companion
 
-> Use during actual interviews on **Google Meet, Microsoft Teams, Zoom, or any video platform** — no integrations needed.
+> Use during actual interviews on **Google Meet, Microsoft Teams, Zoom, Webex, or any video platform** — no integrations needed.
 
 ![Companion App in Teams/Meet](docs/screenshots/05_companion_app.svg)
 
 Open `http://localhost:8000/companion` in a browser window and pin it alongside your video call. The companion captures meeting audio via screen share, detects questions from the interviewer, and streams AI guidance in real time — all while you stay focused on the conversation.
 
+**For full OS-level privacy, run the Electron desktop app** (see [Privacy Features](#privacy-features) below).
+
 **How to use it during a real interview:**
 1. Start the backend: `docker-compose up` or `uvicorn app.main:app`
-2. Open `http://localhost:8000/companion` in a separate browser window
+2. Open `http://localhost:8000/companion` in a separate browser window (or run the desktop app)
 3. Select **Meeting Audio (system)** as the audio source
 4. Click **Start Live Session**
 5. When prompted to share screen/audio, select your Teams/Meet/Zoom window and **check "Share audio"**
@@ -35,6 +37,37 @@ Open `http://localhost:8000/companion` in a browser window and pin it alongside 
 | Meeting Audio (system) | All meeting audio via screen share | Default — works with any platform |
 | Microphone only | Your voice only | Tracking what you say; no question detection |
 | Both (merged) | Mic + meeting audio combined | Highest accuracy |
+
+---
+
+## Privacy Features
+
+The **Electron desktop app** (`electron/`) provides OS-level stealth so the companion window is completely invisible to the interviewer.
+
+| Feature | Status | How |
+|---|---|---|
+| **Invisible on Screen Share** | ✅ Desktop app | `setContentProtection(true)` — window shows as black in Zoom/Teams/Meet screen share, OBS, any capture API |
+| **Hidden from Taskbar / Dock** | ✅ Desktop app | `skipTaskbar: true` (Windows) + `app.dock.hide()` (macOS) |
+| **Hidden from Alt+Tab** | ✅ Desktop app | `type: 'panel'` on macOS (removed from Mission Control), `type: 'toolbar'` on Windows (WS_EX_TOOLWINDOW) |
+| **Always on Top** | ✅ Both | `setAlwaysOnTop(true, 'screen-saver')` — stays above fullscreen video calls |
+| **Panic Hide** | ✅ Both | `Ctrl+Shift+H` global hotkey — instantly hides window at OS level (desktop) or shows blank overlay (browser) |
+| **Cursor Undetectability** | ✅ Both | CSS `cursor: none` hides system cursor over companion window — toggle with 🖱 button or in Privacy Status panel |
+
+**Privacy status panel** (shown in the companion setup screen) displays which protections are active with green/red indicators.
+
+### Run the Desktop App
+
+```bash
+# Install (one time)
+cd electron && npm install
+
+# Run (backend must be started first)
+cd electron && npm start
+```
+
+The window opens at the top-right corner of your screen. It will not appear in screen share, taskbar, or Alt+Tab.
+
+**Emergency hide:** `Ctrl+Shift+H` — global shortcut, works from any app while the interview is running.
 
 ---
 
@@ -430,7 +463,9 @@ START
 - [ ] Company-specific question bank with past-interview crowd data
 
 ### Phase 3
-- [ ] Desktop app (Electron) — no browser needed, captures system audio natively
+- [x] **Electron desktop app** — OS-level screen share protection, taskbar hiding, Alt+Tab hiding
+- [x] **Panic hide** (`Ctrl+Shift+H`) — instant OS-level hide, global shortcut
+- [x] **Cursor undetectability** — CSS cursor:none over companion window
 - [ ] Chrome extension overlay that injects guidance directly into Meet/Teams tabs
 
 ---

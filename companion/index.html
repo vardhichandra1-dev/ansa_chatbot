@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Interview Copilot — Live Companion</title>
+<title>Interview Copilot</title>
 <style>
   :root {
     --bg:        #0f1117;
@@ -29,55 +29,99 @@
     font-family: var(--font);
     font-size: 14px;
     overflow: hidden;
+    /* Cursor undetectability: hide system cursor over companion window.
+       Interactive elements restore it via cursor:pointer/text in their rules. */
   }
+  body.cursor-hide          { cursor: none !important; }
+  body.cursor-hide button,
+  body.cursor-hide input,
+  body.cursor-hide a,
+  body.cursor-hide [role="button"],
+  body.cursor-hide select   { cursor: pointer; }
+  body.cursor-hide input[type="text"],
+  body.cursor-hide textarea  { cursor: text; }
+
+  /* ── Electron drag region ── */
+  .drag-region { -webkit-app-region: drag; }
+  .no-drag      { -webkit-app-region: no-drag; }
 
   /* ── Screens ── */
   .screen { display: none; height: 100vh; flex-direction: column; }
   .screen.active { display: flex; }
 
-  /* ─────────────────── SETUP SCREEN ─────────────────── */
+  /* ─────────── PANIC OVERLAY ──────────────────────────────────────────────── */
+  #panic-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 9999;
+    background: white;           /* looks like a blank browser tab */
+    cursor: default;
+  }
+  #panic-overlay.dark  { background: #1e1e1e; }  /* or VS Code look */
+  #panic-overlay.active { display: flex; align-items: center; justify-content: center; }
+  .panic-hint {
+    color: #999; font-size: 12px; font-family: var(--font);
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  }
+
+  /* ─────────── PRIVACY STATUS BAR ────────────────────────────────────────── */
+  #privacy-bar {
+    background: #0b0d14;
+    border-bottom: 1px solid #1a1d27;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 10px;
+    flex-shrink: 0;
+    height: 24px;
+    -webkit-app-region: drag;
+  }
+  #privacy-bar.hidden { display: none; }
+  .priv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--dim);
+  }
+  .priv-chip.on  { color: var(--green); }
+  .priv-chip.off { color: var(--red); opacity: .7; }
+  .priv-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .priv-spacer { flex: 1; }
+
+  /* ─────────── SETUP SCREEN ─────────────────────────────────────────────── */
   #screen-setup {
     align-items: center;
     justify-content: center;
     padding: 32px 16px;
-    gap: 0;
     overflow-y: auto;
+    flex: 1;
   }
   .setup-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 32px;
+    padding: 28px;
     width: 100%;
     max-width: 480px;
   }
-  .logo-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-  }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
   .logo-icon {
-    width: 36px; height: 36px; border-radius: 8px;
+    width: 34px; height: 34px; border-radius: 8px;
     background: var(--accent);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 14px;
+    font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
   }
-  .logo-title { font-size: 16px; font-weight: 600; }
-  .logo-sub { font-size: 12px; color: var(--dim); }
-
+  .logo-title { font-size: 15px; font-weight: 600; }
+  .logo-sub   { font-size: 11px; color: var(--dim); }
   .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .06em;
-    color: var(--dim);
-    text-transform: uppercase;
-    margin-bottom: 8px;
+    font-size: 10px; font-weight: 600; letter-spacing: .06em;
+    color: var(--dim); text-transform: uppercase; margin-bottom: 8px;
   }
-  .field-group { margin-bottom: 20px; }
-  .field-row { display: flex; gap: 10px; }
-  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-  input, select, textarea {
+  .field-group { margin-bottom: 18px; }
+  .field-row   { display: flex; gap: 8px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  input, select {
     width: 100%;
     background: #151822;
     border: 1px solid var(--border);
@@ -85,231 +129,177 @@
     color: var(--text);
     font-family: var(--font);
     font-size: 13px;
-    padding: 9px 12px;
+    padding: 8px 11px;
     outline: none;
     transition: border-color .15s;
+    cursor: text;
   }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input:focus, select:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
   select option { background: #151822; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
-  .divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 20px 0;
-  }
-
-  /* Audio mode cards */
-  .audio-modes { display: flex; flex-direction: column; gap: 8px; }
+  /* Audio modes */
+  .audio-modes { display: flex; flex-direction: column; gap: 7px; }
   .audio-mode {
-    background: #151822;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
-    cursor: pointer;
+    background: #151822; border: 1px solid var(--border); border-radius: 8px;
+    padding: 11px 13px; cursor: pointer;
     transition: border-color .15s, background .15s;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    display: flex; align-items: flex-start; gap: 10px;
   }
-  .audio-mode:hover { border-color: var(--accent); }
+  .audio-mode:hover  { border-color: var(--accent); }
   .audio-mode.selected { border-color: var(--accent); background: rgba(99,102,241,.08); }
   .audio-mode input[type=radio] { display: none; }
   .mode-dot {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid var(--border);
-    flex-shrink: 0; margin-top: 2px;
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px;
     transition: border-color .15s;
   }
-  .audio-mode.selected .mode-dot {
-    border-color: var(--accent);
-    background: var(--accent);
-  }
+  .audio-mode.selected .mode-dot { border-color: var(--accent); background: var(--accent); }
   .mode-title { font-size: 13px; font-weight: 500; }
-  .mode-desc { font-size: 11px; color: var(--dim); margin-top: 2px; line-height: 1.4; }
+  .mode-desc  { font-size: 11px; color: var(--dim); margin-top: 2px; line-height: 1.4; }
 
+  /* Buttons */
   .btn {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 600;
+    width: 100%; padding: 11px; border: none; border-radius: 8px;
+    cursor: pointer; font-family: var(--font); font-size: 13px; font-weight: 600;
     transition: opacity .15s, transform .1s;
   }
-  .btn:active { transform: scale(.98); }
+  .btn:active:not(:disabled) { transform: scale(.98); }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-secondary {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    font-size: 13px;
-    padding: 9px;
-    width: auto;
-    margin-top: 8px;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); font-size: 12px;
+    padding: 8px; width: auto; margin-top: 8px;
   }
-  .btn-danger { background: rgba(239,68,68,.15); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
+
   .error-msg { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
   .backend-row {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 20px;
-    background: #151822;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 18px;
+    background: #151822; border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 12px;
   }
   .backend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .backend-dot.ok { background: var(--green); }
+  .backend-dot.ok  { background: var(--green); }
   .backend-dot.err { background: var(--red); }
-  .backend-url { color: var(--dim); font-size: 12px; }
+  .backend-url    { color: var(--dim); font-size: 12px; }
   .backend-status { font-size: 12px; margin-left: auto; }
-  .backend-status.ok { color: var(--green); }
+  .backend-status.ok  { color: var(--green); }
   .backend-status.err { color: var(--red); }
 
-  /* Recent sessions list */
-  .recent-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+  /* Recent sessions */
+  .recent-list { display: flex; flex-direction: column; gap: 5px; max-height: 150px; overflow-y: auto; }
   .recent-item {
-    background: #151822;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 10px 12px;
-    cursor: pointer;
+    background: #151822; border: 1px solid var(--border);
+    border-radius: 7px; padding: 9px 11px; cursor: pointer;
     transition: border-color .15s;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .recent-item:hover { border-color: var(--accent); }
+  .recent-item:hover   { border-color: var(--accent); }
   .recent-item.selected { border-color: var(--accent); background: rgba(99,102,241,.08); }
   .recent-title { font-size: 13px; font-weight: 500; }
-  .recent-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
-  .recent-badge {
-    font-size: 10px; padding: 2px 7px; border-radius: 4px;
-    background: rgba(99,102,241,.15); color: var(--accent2);
-  }
+  .recent-meta  { font-size: 11px; color: var(--dim); margin-top: 1px; }
+  .recent-badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: rgba(99,102,241,.15); color: var(--accent2); }
 
-  /* ─────────────────── LIVE SCREEN ─────────────────── */
+  /* Privacy feature badges on setup screen */
+  .privacy-features {
+    display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;
+  }
+  .privacy-feat {
+    display: flex; align-items: center; gap: 8px;
+    background: #151822; border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 12px; font-size: 12px;
+  }
+  .privacy-feat.active { border-color: rgba(34,197,94,.25); background: rgba(34,197,94,.04); }
+  .privacy-feat.inactive { opacity: .5; }
+  .privacy-feat-icon { font-size: 14px; flex-shrink: 0; width: 20px; text-align: center; }
+  .privacy-feat-label { flex: 1; color: var(--muted); }
+  .privacy-feat-status { font-size: 10px; font-weight: 600; }
+  .privacy-feat.active  .privacy-feat-status { color: var(--green); }
+  .privacy-feat.inactive .privacy-feat-status { color: var(--dim); }
+
+  /* ─────────── LIVE SCREEN ────────────────────────────────────────────────── */
   #screen-live { overflow: hidden; }
 
   /* Header */
   .live-header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 0 14px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    padding: 0 10px;
+    height: 44px;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+  }
+  .live-logo { font-size: 11px; font-weight: 600; color: var(--accent2); flex-shrink: 0; }
+  .live-title { font-size: 12px; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
     flex-shrink: 0;
   }
-  .live-logo { font-size: 12px; font-weight: 600; color: var(--accent2); }
-  .live-title { font-size: 13px; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 5px;
+  .badge-live     { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge-live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
+  .badge-paused   { background: rgba(245,158,11,.1);  color: var(--amber); }
+  .badge-connecting { background: rgba(99,102,241,.1);  color: var(--accent2); }
+  .timer { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  /* Header buttons */
+  .hbtn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    padding: 4px 6px; border-radius: 5px; font-size: 13px;
+    transition: color .15s, background .15s;
+    -webkit-app-region: no-drag; flex-shrink: 0;
   }
-  .badge-live { background: rgba(239,68,68,.15); color: var(--red); }
-  .badge-live::before {
-    content: '';
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--red);
-    animation: blink 1s infinite;
-  }
-  .badge-paused { background: rgba(245,158,11,.1); color: var(--amber); }
-  .badge-connecting { background: rgba(99,102,241,.1); color: var(--accent2); }
-  .timer { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
-  .header-btn {
+  .hbtn:hover { color: var(--text); background: var(--border); }
+
+  /* Panic button — red tint */
+  .hbtn-panic        { color: var(--dim); }
+  .hbtn-panic:hover  { color: var(--red); background: rgba(239,68,68,.1); }
+
+  /* Corner snap buttons */
+  .corner-btns { display: flex; gap: 2px; -webkit-app-region: no-drag; }
+  .corner-btn {
     background: none; border: none; cursor: pointer;
-    color: var(--muted); padding: 4px 7px; border-radius: 5px;
-    font-size: 13px; transition: color .15s, background .15s;
+    color: var(--dim); font-size: 10px; padding: 2px 4px;
+    border-radius: 3px; transition: color .15s;
   }
-  .header-btn:hover { color: var(--text); background: var(--border); }
+  .corner-btn:hover { color: var(--muted); }
 
   /* Main area */
-  .live-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 10px;
-    gap: 8px;
-  }
+  .live-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 8px; gap: 7px; }
 
   /* Question box */
   .question-box {
-    background: var(--surface2);
-    border: 1px solid var(--accent);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    flex-shrink: 0;
-    display: none;
+    background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 10px 12px;
+    flex-shrink: 0; display: none;
   }
-  .question-box.visible { display: block; }
+  .question-box.visible { display: block; animation: fadeIn .2s ease; }
   .question-tag {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .05em;
-    color: var(--accent2);
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: .05em;
+    color: var(--accent2); text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
   }
-  .q-type-chip {
-    font-size: 10px; padding: 1px 6px; border-radius: 3px;
-    background: rgba(99,102,241,.15); color: var(--accent2);
-    font-weight: 500;
-    text-transform: none;
-  }
-  .q-followup-chip {
-    font-size: 10px; padding: 1px 6px; border-radius: 3px;
-    background: rgba(245,158,11,.12); color: var(--amber);
-    font-weight: 500;
-    text-transform: none;
-  }
-  .question-text {
-    font-size: 13px; color: var(--text); line-height: 1.5;
-    font-weight: 500;
-  }
-  .question-rewritten {
-    font-size: 12px; color: var(--dim); margin-top: 4px;
-    font-style: italic;
-  }
+  .q-type-chip     { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: rgba(99,102,241,.15); color: var(--accent2); font-weight: 500; text-transform: none; }
+  .q-followup-chip { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: rgba(245,158,11,.12); color: var(--amber); font-weight: 500; text-transform: none; }
+  .question-text      { font-size: 13px; color: var(--text); line-height: 1.5; font-weight: 500; }
+  .question-rewritten { font-size: 11px; color: var(--dim); margin-top: 4px; font-style: italic; }
+  .q-count-pill       { font-size: 10px; padding: 1px 7px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--dim); margin-left: auto; }
 
-  /* Guidance panel */
+  /* Guidance */
   .guidance-panel {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); display: flex; flex-direction: column;
+    overflow: hidden; min-height: 0;
   }
   .guidance-header {
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
+    padding: 7px 11px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px; flex-shrink: 0;
   }
-  .guidance-title { font-size: 12px; font-weight: 600; color: var(--muted); flex: 1; }
-  .streaming-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--green);
-    animation: blink .8s infinite;
-    display: none;
-  }
+  .guidance-title   { font-size: 11px; font-weight: 600; color: var(--muted); flex: 1; }
+  .streaming-dot    { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink .8s infinite; display: none; }
   .streaming-dot.active { display: inline-block; }
   .copy-btn {
     background: none; border: none; cursor: pointer;
@@ -318,276 +308,214 @@
   }
   .copy-btn:hover { color: var(--text); background: var(--border); }
   .guidance-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    font-size: 13px;
-    line-height: 1.65;
-    color: var(--muted);
+    flex: 1; overflow-y: auto; padding: 11px;
+    font-size: 13px; line-height: 1.65; color: var(--muted);
   }
   .guidance-placeholder {
-    color: var(--dim);
-    font-size: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    gap: 8px;
-    text-align: center;
+    color: var(--dim); font-size: 12px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%; gap: 7px; text-align: center;
   }
-  .guidance-placeholder .icon { font-size: 28px; opacity: .5; }
+  .guidance-placeholder .icon { font-size: 26px; opacity: .45; }
   .guidance-body strong { color: var(--accent2); font-weight: 600; }
-  .guidance-body ul { margin: 4px 0 10px 18px; }
-  .guidance-body li { margin-bottom: 3px; }
+  .guidance-body ul     { margin: 3px 0 9px 17px; }
+  .guidance-body li     { margin-bottom: 3px; }
   .cursor-blink {
-    display: inline-block;
-    width: 7px; height: 14px;
-    background: var(--accent);
-    border-radius: 1px;
-    animation: blink .8s infinite;
-    vertical-align: text-bottom;
-    margin-left: 2px;
+    display: inline-block; width: 7px; height: 13px;
+    background: var(--accent); border-radius: 1px;
+    animation: blink .8s infinite; vertical-align: text-bottom; margin-left: 2px;
   }
   .cursor-blink.hidden { display: none; }
 
   /* Transcript drawer */
   .transcript-drawer {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    flex-shrink: 0;
-    overflow: hidden;
-    max-height: 44px;
-    transition: max-height .2s;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); flex-shrink: 0;
+    overflow: hidden; max-height: 40px; transition: max-height .2s;
   }
-  .transcript-drawer.open { max-height: 160px; }
+  .transcript-drawer.open { max-height: 150px; }
   .drawer-toggle {
-    width: 100%;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--muted);
-    font-family: var(--font);
-    font-size: 12px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-align: left;
+    width: 100%; background: none; border: none; cursor: pointer;
+    color: var(--muted); font-family: var(--font); font-size: 11px;
+    padding: 9px 11px; display: flex; align-items: center; gap: 5px; text-align: left;
   }
   .drawer-toggle:hover { color: var(--text); }
-  .drawer-arrow { transition: transform .2s; display: inline-block; font-size: 10px; }
+  .drawer-arrow { transition: transform .2s; display: inline-block; font-size: 9px; }
   .transcript-drawer.open .drawer-arrow { transform: rotate(90deg); }
-  .transcript-list {
-    overflow-y: auto;
-    max-height: 116px;
-    padding: 0 10px 8px;
-  }
-  .transcript-seg {
-    padding: 5px 6px;
-    border-left: 2px solid var(--border);
-    margin-bottom: 4px;
-    font-size: 12px;
-  }
+  .transcript-list { overflow-y: auto; max-height: 106px; padding: 0 9px 7px; }
+  .transcript-seg { padding: 4px 6px; border-left: 2px solid var(--border); margin-bottom: 3px; font-size: 11px; }
   .transcript-seg.interviewer { border-color: var(--amber); }
-  .transcript-seg.candidate  { border-color: var(--accent); }
-  .seg-speaker {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 2px;
-    color: var(--dim);
-  }
+  .transcript-seg.candidate   { border-color: var(--accent); }
+  .seg-speaker { font-size: 9px; font-weight: 600; text-transform: uppercase; margin-bottom: 1px; color: var(--dim); }
   .transcript-seg.interviewer .seg-speaker { color: var(--amber); }
-  .transcript-seg.candidate  .seg-speaker { color: var(--accent2); }
+  .transcript-seg.candidate   .seg-speaker { color: var(--accent2); }
 
   /* Manual question bar */
-  .manual-bar {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  .manual-input {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 13px;
-  }
+  .manual-bar { display: flex; gap: 5px; flex-shrink: 0; }
+  .manual-input { flex: 1; padding: 7px 11px; font-size: 12px; }
   .send-btn {
-    width: auto;
-    padding: 8px 14px;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    transition: opacity .15s;
+    width: auto; padding: 7px 13px; background: var(--accent); color: #fff;
+    border: none; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 600;
+    white-space: nowrap; transition: opacity .15s;
   }
   .send-btn:hover { opacity: .85; }
 
-  /* Bottom status bar */
+  /* Status bar */
   .status-bar {
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 6px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-    font-size: 11px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 5px 12px; display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0; font-size: 11px;
   }
-  .status-text { color: var(--muted); flex: 1; }
-  .audio-indicator { display: flex; gap: 2px; align-items: flex-end; height: 16px; }
-  .audio-bar {
-    width: 3px; border-radius: 2px; background: var(--accent);
-    transform-origin: bottom;
-    animation: audioWave 0.6s ease infinite;
-  }
+  .status-text { color: var(--muted); flex: 1; font-size: 11px; }
+  .audio-indicator { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
+  .audio-bar { width: 3px; border-radius: 2px; background: var(--accent); transform-origin: bottom; animation: audioWave 0.6s ease infinite; }
   .audio-bar:nth-child(1) { height: 4px;  animation-delay: 0s; }
-  .audio-bar:nth-child(2) { height: 10px; animation-delay: .15s; }
-  .audio-bar:nth-child(3) { height: 7px;  animation-delay: .3s; }
-  .audio-bar:nth-child(4) { height: 12px; animation-delay: .05s; }
+  .audio-bar:nth-child(2) { height: 9px;  animation-delay: .15s; }
+  .audio-bar:nth-child(3) { height: 6px;  animation-delay: .3s; }
+  .audio-bar:nth-child(4) { height: 11px; animation-delay: .05s; }
   .audio-bar:nth-child(5) { height: 5px;  animation-delay: .25s; }
   .audio-indicator.silent .audio-bar { animation: none; height: 3px; background: var(--dim); }
 
   .pause-btn, .end-btn {
     background: none; border: 1px solid var(--border); border-radius: 5px;
     cursor: pointer; color: var(--muted); font-family: var(--font);
-    font-size: 11px; padding: 3px 9px;
-    transition: color .15s, border-color .15s;
+    font-size: 10px; padding: 2px 8px; transition: color .15s, border-color .15s;
   }
   .pause-btn:hover { color: var(--amber); border-color: var(--amber); }
   .end-btn:hover   { color: var(--red);   border-color: var(--red); }
 
-  /* Question history sidebar (compact mode hides it) */
-  .q-count-pill {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    font-size: 11px;
-    padding: 2px 10px;
-    color: var(--dim);
-    cursor: default;
-  }
-
   /* Compact mode */
   body.compact .transcript-drawer { display: none; }
   body.compact .manual-bar        { display: none; }
-  body.compact .live-body         { padding: 6px; gap: 6px; }
+  body.compact .live-body         { padding: 6px; gap: 5px; }
 
   /* Animations */
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: .2; }
-  }
-  @keyframes audioWave {
-    0%, 100% { transform: scaleY(1); }
-    50%       { transform: scaleY(1.8); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .question-box { animation: fadeIn .2s ease; }
+  @keyframes blink     { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+  @keyframes audioWave { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.8); } }
+  @keyframes fadeIn    { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
   /* Toast */
   .toast {
-    position: fixed;
-    bottom: 60px; left: 50%; transform: translateX(-50%);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 12px;
-    color: var(--muted);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity .2s;
-    z-index: 100;
+    position: fixed; bottom: 56px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 7px 14px; font-size: 12px; color: var(--muted);
+    pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 100;
   }
   .toast.show { opacity: 1; }
 
   /* Scrollbar */
-  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* Permission notice */
   .permission-notice {
-    background: rgba(245,158,11,.08);
-    border: 1px solid rgba(245,158,11,.2);
-    border-radius: 7px;
-    padding: 10px 12px;
-    font-size: 12px;
-    color: var(--amber);
-    margin-bottom: 12px;
-    line-height: 1.5;
-    display: none;
+    background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.2);
+    border-radius: 7px; padding: 9px 11px; font-size: 11px; color: var(--amber);
+    margin-bottom: 10px; line-height: 1.5; display: none;
   }
 </style>
 </head>
 <body>
 
+<!-- ── Privacy overlay: blank white page shown on Ctrl+H / panic button ──── -->
+<div id="panic-overlay">
+  <div class="panic-hint">Press Ctrl+Shift+H to restore</div>
+</div>
+
+<!-- ── Privacy status bar (always visible, minimal) ──────────────────────── -->
+<div id="privacy-bar">
+  <span class="priv-chip" id="priv-screen">
+    <span class="priv-dot"></span>Screen Share
+  </span>
+  <span class="priv-chip" id="priv-taskbar">
+    <span class="priv-dot"></span>Taskbar
+  </span>
+  <span class="priv-chip" id="priv-alttab">
+    <span class="priv-dot"></span>Alt+Tab
+  </span>
+  <span class="priv-chip" id="priv-cursor">
+    <span class="priv-dot"></span>Cursor
+  </span>
+  <span class="priv-spacer"></span>
+  <span style="color:var(--dim);font-size:10px;" id="priv-hotkey-hint">Ctrl+Shift+H hide</span>
+</div>
+
 <!-- ───────────── SETUP SCREEN ───────────── -->
 <div id="screen-setup" class="screen active">
   <div class="setup-card">
     <div class="logo-row">
-      <div class="logo-icon">AI</div>
+      <div class="logo-icon no-drag">AI</div>
       <div>
         <div class="logo-title">Interview Copilot</div>
         <div class="logo-sub">Live Meeting Companion</div>
       </div>
     </div>
 
-    <!-- Backend connection status -->
+    <!-- Privacy feature status -->
+    <div class="field-group">
+      <div class="section-label">Privacy Status</div>
+      <div class="privacy-features" id="privacy-features">
+        <div class="privacy-feat" id="pf-screen">
+          <span class="privacy-feat-icon">🖥</span>
+          <span class="privacy-feat-label">Invisible on Screen Share</span>
+          <span class="privacy-feat-status" id="pf-screen-status">Checking…</span>
+        </div>
+        <div class="privacy-feat" id="pf-taskbar">
+          <span class="privacy-feat-icon">📌</span>
+          <span class="privacy-feat-label">Hidden from Taskbar / Dock</span>
+          <span class="privacy-feat-status" id="pf-taskbar-status">Checking…</span>
+        </div>
+        <div class="privacy-feat" id="pf-alttab">
+          <span class="privacy-feat-icon">⌥</span>
+          <span class="privacy-feat-label">Hidden from Alt+Tab</span>
+          <span class="privacy-feat-status" id="pf-alttab-status">Checking…</span>
+        </div>
+        <div class="privacy-feat" id="pf-cursor">
+          <span class="privacy-feat-icon">🖱</span>
+          <span class="privacy-feat-label">Cursor Undetectability</span>
+          <span class="privacy-feat-status" id="pf-cursor-status">OFF</span>
+        </div>
+      </div>
+      <div id="electron-notice" style="display:none;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:7px;padding:9px 11px;font-size:11px;color:var(--amber);line-height:1.5;">
+        ⚠ Running in browser — screen share &amp; taskbar protection requires the <strong>desktop app</strong>.<br>
+        Run <code style="background:#151822;padding:1px 4px;border-radius:3px;">cd electron &amp;&amp; npm install &amp;&amp; npm start</code> for full privacy.
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
+    <!-- Backend connection -->
     <div class="backend-row" id="backend-row">
       <div class="backend-dot" id="backend-dot"></div>
       <span class="backend-url" id="backend-url-text">localhost:8000</span>
       <span class="backend-status" id="backend-status">Checking…</span>
     </div>
-
-    <!-- Backend URL (hidden by default, expandable) -->
-    <details style="margin-bottom:14px;">
+    <details style="margin-bottom:12px;">
       <summary style="font-size:11px;color:var(--dim);cursor:pointer;list-style:none;">▸ Change backend URL</summary>
-      <div style="margin-top:8px;">
+      <div style="margin-top:6px;">
         <label>Backend URL</label>
-        <input type="text" id="backend-url-input" value="http://localhost:8000" placeholder="http://localhost:8000"/>
+        <input type="text" id="backend-url-input" value="http://localhost:8000"/>
       </div>
     </details>
 
     <!-- Interview selection -->
     <div class="field-group">
       <div class="section-label">Interview Session</div>
-
       <div id="recent-sessions-wrap">
         <div class="recent-list" id="recent-list">
           <div style="color:var(--dim);font-size:12px;padding:8px 0;">Loading sessions…</div>
         </div>
-        <button class="btn-secondary btn" id="new-session-btn" style="margin-top:8px;">+ Create new session</button>
+        <button class="btn-secondary btn no-drag" id="new-session-btn" style="margin-top:6px;">+ Create new session</button>
       </div>
-
-      <!-- New session form (hidden until button clicked) -->
-      <div id="new-session-form" style="display:none;margin-top:10px;">
-        <div class="field-row" style="margin-bottom:8px;">
-          <div style="flex:2;">
-            <label>Session title</label>
-            <input type="text" id="session-title" placeholder="e.g. Google — Senior SWE"/>
-          </div>
+      <div id="new-session-form" style="display:none;margin-top:8px;">
+        <div class="field-row" style="margin-bottom:7px;">
+          <div style="flex:2;"><label>Session title</label><input type="text" id="session-title" placeholder="Google — Senior SWE"/></div>
         </div>
         <div class="field-row">
-          <div style="flex:1;">
-            <label>Company</label>
-            <input type="text" id="session-company" placeholder="Google"/>
-          </div>
-          <div style="flex:1;">
-            <label>Role</label>
-            <input type="text" id="session-role" placeholder="Senior SWE"/>
-          </div>
+          <div style="flex:1;"><label>Company</label><input type="text" id="session-company" placeholder="Google"/></div>
+          <div style="flex:1;"><label>Role</label><input type="text" id="session-role" placeholder="Senior SWE"/></div>
         </div>
-        <button class="btn-secondary btn" id="cancel-new-btn" style="margin-top:6px;">← Back to sessions</button>
+        <button class="btn-secondary btn no-drag" id="cancel-new-btn" style="margin-top:5px;">← Back</button>
       </div>
     </div>
 
@@ -596,48 +524,44 @@
     <!-- Audio source -->
     <div class="field-group">
       <div class="section-label">Audio Source</div>
-
       <div class="permission-notice" id="perm-notice">
-        ⚠ <strong>Meeting Audio</strong> requires screen-share permission. When the browser prompts, select your meeting tab or window and make sure <strong>"Share audio"</strong> is checked.
+        ⚠ When prompted, select your meeting tab/window and ensure <strong>"Share audio"</strong> is checked.
       </div>
-
       <div class="audio-modes">
-        <label class="audio-mode selected" id="mode-system">
+        <label class="audio-mode selected no-drag" id="mode-system">
           <input type="radio" name="audio-mode" value="system" checked/>
           <div class="mode-dot"></div>
           <div>
             <div class="mode-title">🖥 Meeting Audio <span style="font-size:10px;color:var(--green);font-weight:500;">Recommended</span></div>
-            <div class="mode-desc">Captures all audio from your Teams / Meet window (interviewer + you). Requires screen share with audio.</div>
+            <div class="mode-desc">Captures all audio from Teams / Meet / Zoom via screen share.</div>
           </div>
         </label>
-        <label class="audio-mode" id="mode-mic">
+        <label class="audio-mode no-drag" id="mode-mic">
           <input type="radio" name="audio-mode" value="mic"/>
           <div class="mode-dot"></div>
           <div>
             <div class="mode-title">🎙 Microphone Only</div>
-            <div class="mode-desc">Captures your voice only. Use alongside system audio for best results, or when system capture is unavailable.</div>
+            <div class="mode-desc">Your voice only — no question detection, transcript only.</div>
           </div>
         </label>
-        <label class="audio-mode" id="mode-both">
+        <label class="audio-mode no-drag" id="mode-both">
           <input type="radio" name="audio-mode" value="both"/>
           <div class="mode-dot"></div>
           <div>
             <div class="mode-title">🎙 + 🖥 Microphone + Meeting Audio</div>
-            <div class="mode-desc">Both sources merged — highest accuracy. Requires both mic and screen-share permissions.</div>
+            <div class="mode-desc">Both sources merged — highest accuracy.</div>
           </div>
         </label>
       </div>
     </div>
 
     <div class="error-msg" id="setup-error"></div>
+    <button class="btn btn-primary no-drag" id="start-btn" style="margin-top:2px;">Start Live Session →</button>
 
-    <button class="btn btn-primary" id="start-btn" style="margin-top:4px;">
-      Start Live Session →
-    </button>
-
-    <div style="font-size:11px;color:var(--dim);text-align:center;margin-top:12px;">
-      Keyboard shortcuts: <kbd style="background:var(--border);padding:1px 5px;border-radius:3px;">Ctrl+M</kbd> manual question &nbsp;
-      <kbd style="background:var(--border);padding:1px 5px;border-radius:3px;">Ctrl+K</kbd> compact mode
+    <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:10px;">
+      <kbd style="background:var(--border);padding:1px 5px;border-radius:3px;">Ctrl+Shift+H</kbd> panic hide &nbsp;
+      <kbd style="background:var(--border);padding:1px 5px;border-radius:3px;">Ctrl+M</kbd> manual question &nbsp;
+      <kbd style="background:var(--border);padding:1px 5px;border-radius:3px;">Ctrl+K</kbd> compact
     </div>
   </div>
 </div>
@@ -646,13 +570,27 @@
 <div id="screen-live" class="screen">
 
   <!-- Header -->
-  <div class="live-header">
-    <span class="live-logo">Copilot</span>
-    <span class="live-title" id="live-title">Interview</span>
-    <span class="badge badge-connecting" id="live-badge">Connecting</span>
-    <span class="timer" id="live-timer">00:00</span>
-    <button class="header-btn" id="compact-btn" title="Toggle compact (Ctrl+K)">⊡</button>
-    <button class="header-btn" id="back-btn" title="Back to setup">✕</button>
+  <div class="live-header drag-region">
+    <span class="live-logo no-drag">Copilot</span>
+    <span class="live-title no-drag" id="live-title">Interview</span>
+    <span class="badge badge-connecting no-drag" id="live-badge">Connecting</span>
+    <span class="timer no-drag" id="live-timer">00:00</span>
+
+    <!-- Corner snap (Electron only) -->
+    <div class="corner-btns" id="corner-btns" style="display:none;">
+      <button class="corner-btn" title="Top-left"  data-corner="tl">↖</button>
+      <button class="corner-btn" title="Top-right"  data-corner="tr">↗</button>
+      <button class="corner-btn" title="Bot-right" data-corner="br">↘</button>
+    </div>
+
+    <!-- Panic / hide button -->
+    <button class="hbtn hbtn-panic no-drag" id="panic-btn" title="Panic hide (Ctrl+Shift+H)">🛡</button>
+    <!-- Cursor toggle -->
+    <button class="hbtn no-drag" id="cursor-btn" title="Toggle cursor hide">🖱</button>
+    <!-- Compact -->
+    <button class="hbtn no-drag" id="compact-btn" title="Compact mode (Ctrl+K)">⊡</button>
+    <!-- Back -->
+    <button class="hbtn no-drag" id="back-btn" title="Back to setup">✕</button>
   </div>
 
   <!-- Body -->
@@ -675,31 +613,31 @@
       <div class="guidance-header">
         <span class="guidance-title">AI Guidance</span>
         <span class="streaming-dot" id="streaming-dot"></span>
-        <button class="copy-btn" id="copy-btn" title="Copy guidance">⎘ Copy</button>
+        <button class="copy-btn no-drag" id="copy-btn">⎘ Copy</button>
       </div>
       <div class="guidance-body" id="guidance-body">
         <div class="guidance-placeholder" id="guidance-placeholder">
           <span class="icon">🎙</span>
-          <span>Listening for interview questions…</span>
-          <span style="font-size:11px;">Guidance will appear here when a question is detected.</span>
+          <span>Listening for questions…</span>
+          <span style="font-size:11px;">Guidance streams here when a question is detected.</span>
         </div>
       </div>
     </div>
 
     <!-- Transcript drawer -->
     <div class="transcript-drawer" id="transcript-drawer">
-      <button class="drawer-toggle" id="drawer-toggle">
+      <button class="drawer-toggle no-drag" id="drawer-toggle">
         <span class="drawer-arrow">▶</span>
         <span>Transcript</span>
-        <span id="seg-count" style="color:var(--dim);font-size:11px;">0 segments</span>
+        <span id="seg-count" style="color:var(--dim);font-size:10px;margin-left:4px;">0 segments</span>
       </button>
       <div class="transcript-list" id="transcript-list"></div>
     </div>
 
     <!-- Manual question bar -->
     <div class="manual-bar">
-      <input type="text" class="manual-input" id="manual-input" placeholder="Type a question manually… (Ctrl+M to focus)"/>
-      <button class="send-btn" id="send-manual-btn">Send →</button>
+      <input type="text" class="manual-input no-drag" id="manual-input" placeholder="Manual question… (Ctrl+M)"/>
+      <button class="send-btn no-drag" id="send-manual-btn">Send →</button>
     </div>
 
   </div>
@@ -707,23 +645,124 @@
   <!-- Status bar -->
   <div class="status-bar">
     <div class="audio-indicator silent" id="audio-indicator">
-      <div class="audio-bar"></div>
-      <div class="audio-bar"></div>
-      <div class="audio-bar"></div>
-      <div class="audio-bar"></div>
+      <div class="audio-bar"></div><div class="audio-bar"></div>
+      <div class="audio-bar"></div><div class="audio-bar"></div>
       <div class="audio-bar"></div>
     </div>
     <span class="status-text" id="status-text">Initializing…</span>
-    <button class="pause-btn" id="pause-btn">⏸ Pause</button>
-    <button class="end-btn" id="end-btn">■ End</button>
+    <button class="pause-btn no-drag" id="pause-btn">⏸ Pause</button>
+    <button class="end-btn   no-drag" id="end-btn">■ End</button>
   </div>
 
 </div>
 
-<!-- Toast notification -->
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Feature detection
+// ─────────────────────────────────────────────────────────────────────────────
+const IS_ELECTRON = !!(window.electronAPI?.isElectron);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Privacy feature setup
+// ─────────────────────────────────────────────────────────────────────────────
+function initPrivacy() {
+  // Receive OS-level privacy status from Electron main process
+  if (IS_ELECTRON && window.electronAPI.onPrivacyStatus) {
+    window.electronAPI.onPrivacyStatus((status) => applyPrivacyStatus(status));
+  } else {
+    // Browser mode — screen share / taskbar protection unavailable
+    applyPrivacyStatus({
+      screenShareProtected: false,
+      taskbarHidden:        false,
+      altTabHidden:         false,
+      dockHidden:           false,
+      platform:             navigator.platform,
+      hotkey:               'Ctrl+Shift+H',
+    });
+    $('electron-notice').style.display = 'block';
+  }
+}
+
+function applyPrivacyStatus(s) {
+  setPrivChip('priv-screen',  s.screenShareProtected);
+  setPrivChip('priv-taskbar', s.taskbarHidden || s.dockHidden);
+  setPrivChip('priv-alttab',  s.altTabHidden);
+  setPrivChip('priv-cursor',  false);   // cursor hide is a toggle, starts off
+
+  setPrivFeat('pf-screen',  s.screenShareProtected, s.screenShareProtected ? 'ACTIVE' : 'Browser only');
+  setPrivFeat('pf-taskbar', s.taskbarHidden || s.dockHidden, (s.taskbarHidden || s.dockHidden) ? 'ACTIVE' : 'Browser only');
+  setPrivFeat('pf-alttab',  s.altTabHidden, s.altTabHidden ? 'ACTIVE' : 'Browser only');
+  setPrivFeat('pf-cursor',  false, 'OFF — click 🖱 to enable');
+
+  if (s.hotkey) $('priv-hotkey-hint').textContent = `${s.hotkey} hide`;
+
+  // Show corner snap buttons in Electron
+  if (IS_ELECTRON) $('corner-btns').style.display = 'flex';
+}
+
+function setPrivChip(id, active) {
+  const el = $(id);
+  el.className = 'priv-chip ' + (active ? 'on' : 'off');
+}
+function setPrivFeat(id, active, label) {
+  const el = $(id);
+  el.className = 'privacy-feat ' + (active ? 'active' : 'inactive');
+  el.querySelector('.privacy-feat-status').textContent = label;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Panic hide (web-level: shows blank white overlay; Electron: hides window)
+// ─────────────────────────────────────────────────────────────────────────────
+let panicActive = false;
+
+function activatePanic() {
+  if (IS_ELECTRON) {
+    // True OS-level hide — window disappears entirely from screen
+    window.electronAPI.hide();
+    return;
+  }
+  // Browser fallback: cover with blank overlay
+  panicActive = true;
+  $('panic-overlay').classList.add('active');
+}
+
+function deactivatePanic() {
+  panicActive = false;
+  $('panic-overlay').classList.remove('active');
+  if (IS_ELECTRON) window.electronAPI.show();
+}
+
+$('panic-btn').addEventListener('click', activatePanic);
+$('panic-overlay').addEventListener('click', deactivatePanic);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cursor undetectability toggle
+// ─────────────────────────────────────────────────────────────────────────────
+let cursorHidden = false;
+
+function toggleCursorHide() {
+  cursorHidden = !cursorHidden;
+  document.body.classList.toggle('cursor-hide', cursorHidden);
+  $('cursor-btn').style.opacity = cursorHidden ? '1' : '0.5';
+  $('cursor-btn').title = cursorHidden ? 'Cursor hidden (click to restore)' : 'Hide cursor';
+  setPrivChip('priv-cursor', cursorHidden);
+  setPrivFeat('pf-cursor', cursorHidden, cursorHidden ? 'ACTIVE' : 'OFF — click 🖱 to enable');
+  showToast(cursorHidden ? 'Cursor hidden over companion window' : 'Cursor restored');
+}
+$('cursor-btn').addEventListener('click', toggleCursorHide);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Corner snap (Electron only)
+// ─────────────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.corner-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (IS_ELECTRON) window.electronAPI.moveToCorner(btn.dataset.corner);
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // State
 // ─────────────────────────────────────────────────────────────────────────────
@@ -731,10 +770,10 @@ const state = {
   backendUrl: 'http://localhost:8000',
   interviewId: null,
   interviewTitle: '',
-  audioMode: 'system',   // system | mic | both
+  audioMode: 'system',
   ws: null,
-  recorders: [],         // MediaRecorder instances
-  streams: [],           // MediaStream instances
+  recorders: [],
+  streams: [],
   isPaused: false,
   isConnected: false,
   timerInterval: null,
@@ -743,25 +782,25 @@ const state = {
   currentGuidance: '',
   isStreaming: false,
   transcriptSegs: [],
-  selectedSessionId: null,  // UUID of an existing session chosen in setup
+  selectedSessionId: null,
+  _rawMicStream: null,
+  _rawSysStream: null,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DOM refs
+// DOM helper
 // ─────────────────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Backend URL management
+// Backend health check
 // ─────────────────────────────────────────────────────────────────────────────
-function getBackend() {
-  return $('backend-url-input').value.replace(/\/$/, '');
-}
+function getBackend() { return $('backend-url-input').value.replace(/\/$/, ''); }
 
 async function checkBackend() {
   const url = getBackend();
   state.backendUrl = url;
-  $('backend-url-text').textContent = url.replace('http://', '').replace('https://', '');
+  $('backend-url-text').textContent = url.replace(/^https?:\/\//, '');
   try {
     const r = await fetch(`${url}/health`, { signal: AbortSignal.timeout(3000) });
     if (r.ok) {
@@ -778,15 +817,13 @@ async function checkBackend() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Recent sessions loader
+// Recent sessions
 // ─────────────────────────────────────────────────────────────────────────────
 async function loadRecentSessions() {
-  const url = getBackend();
   try {
-    const r = await fetch(`${url}/api/v1/interviews?limit=8`, { signal: AbortSignal.timeout(4000) });
+    const r = await fetch(`${getBackend()}/api/v1/interviews?limit=8`, { signal: AbortSignal.timeout(4000) });
     if (!r.ok) throw new Error();
-    const sessions = await r.json();
-    renderRecentSessions(sessions);
+    renderRecentSessions(await r.json());
   } catch (_) {
     $('recent-list').innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px 0;">Could not load sessions. Create a new one.</div>';
   }
@@ -795,22 +832,16 @@ async function loadRecentSessions() {
 function renderRecentSessions(sessions) {
   const list = $('recent-list');
   if (!sessions.length) {
-    list.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px 0;">No sessions yet. Create one below.</div>';
+    list.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px 0;">No sessions yet.</div>';
     return;
   }
   list.innerHTML = '';
-  sessions.forEach(s => {
+  sessions.forEach((s, i) => {
     const el = document.createElement('div');
-    el.className = 'recent-item';
+    el.className = 'recent-item' + (i === 0 ? ' selected' : '');
     el.dataset.id = s.id;
     const date = new Date(s.created_at).toLocaleDateString(undefined, {month:'short',day:'numeric'});
-    el.innerHTML = `
-      <div>
-        <div class="recent-title">${escHtml(s.title)}</div>
-        <div class="recent-meta">${escHtml(s.company || '')}${s.company && s.role ? ' · ' : ''}${escHtml(s.role || '')} &nbsp;·&nbsp; ${date}</div>
-      </div>
-      <span class="recent-badge">${escHtml(s.status)}</span>
-    `;
+    el.innerHTML = `<div><div class="recent-title">${escHtml(s.title)}</div><div class="recent-meta">${escHtml(s.company||'')}${s.company&&s.role?' · ':''}${escHtml(s.role||'')} · ${date}</div></div><span class="recent-badge">${escHtml(s.status)}</span>`;
     el.addEventListener('click', () => {
       document.querySelectorAll('.recent-item').forEach(x => x.classList.remove('selected'));
       el.classList.add('selected');
@@ -820,31 +851,18 @@ function renderRecentSessions(sessions) {
     });
     list.appendChild(el);
   });
-  // Auto-select first
-  if (sessions.length) {
-    list.firstChild.classList.add('selected');
-    state.selectedSessionId = sessions[0].id;
-    state.interviewTitle = sessions[0].title;
-  }
+  if (sessions.length) { state.selectedSessionId = sessions[0].id; state.interviewTitle = sessions[0].title; }
 }
 
 function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// New session form toggle
+// New session form
 // ─────────────────────────────────────────────────────────────────────────────
-function showNewSessionForm() {
-  $('recent-sessions-wrap').style.display = 'none';
-  $('new-session-form').style.display = 'block';
-  state.selectedSessionId = null;
-  $('session-title').focus();
-}
-function hideNewSessionForm() {
-  $('new-session-form').style.display = 'none';
-  $('recent-sessions-wrap').style.display = 'block';
-}
+function showNewSessionForm() { $('recent-sessions-wrap').style.display='none'; $('new-session-form').style.display='block'; state.selectedSessionId=null; $('session-title').focus(); }
+function hideNewSessionForm() { $('new-session-form').style.display='none'; $('recent-sessions-wrap').style.display='block'; }
 $('new-session-btn').addEventListener('click', showNewSessionForm);
 $('cancel-new-btn').addEventListener('click', hideNewSessionForm);
 
@@ -857,9 +875,7 @@ document.querySelectorAll('.audio-mode').forEach(el => {
     el.classList.add('selected');
     el.querySelector('input[type=radio]').checked = true;
     state.audioMode = el.querySelector('input[type=radio]').value;
-    // Show permission notice for modes that need screen share
-    const showNotice = state.audioMode === 'system' || state.audioMode === 'both';
-    $('perm-notice').style.display = showNotice ? 'block' : 'none';
+    $('perm-notice').style.display = (state.audioMode === 'system' || state.audioMode === 'both') ? 'block' : 'none';
   });
 });
 
@@ -877,52 +893,35 @@ async function startSession() {
 
   try {
     state.backendUrl = getBackend();
-
-    // 1. Ensure we have an interview session
     if (state.selectedSessionId) {
       state.interviewId = state.selectedSessionId;
     } else {
-      // Create a new session
       const title = $('session-title').value.trim();
-      if (!title) { showError('Please enter a session title.'); return; }
+      if (!title) { showSetupError('Please enter a session title.'); return; }
       const res = await fetch(`${state.backendUrl}/api/v1/interviews`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          title,
-          company: $('session-company').value.trim() || null,
-          role: $('session-role').value.trim() || null,
-          interview_type: 'live',
-        }),
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ title, company: $('session-company').value.trim()||null, role: $('session-role').value.trim()||null, interview_type:'live' }),
       });
-      if (!res.ok) { showError('Failed to create session: ' + res.status); return; }
+      if (!res.ok) { showSetupError('Failed to create session: '+res.status); return; }
       const data = await res.json();
       state.interviewId = data.id;
       state.interviewTitle = data.title;
     }
-
-    // 2. Capture audio
     await captureAudio();
-
-    // 3. Switch to live screen
     switchScreen('live');
     $('live-title').textContent = state.interviewTitle || 'Live Interview';
-
-    // 4. Connect WebSocket
     connectWebSocket();
-
-    // 5. Start timer
     startTimer();
-
   } catch (e) {
-    showError('Error: ' + e.message);
+    showSetupError('Error: '+e.message);
   } finally {
     btn.disabled = false;
     btn.textContent = 'Start Live Session →';
   }
 }
 
-function showError(msg) {
+function showSetupError(msg) {
   const err = $('setup-error');
   err.textContent = msg;
   err.style.display = 'block';
@@ -933,162 +932,101 @@ function showError(msg) {
 // ─────────────────────────────────────────────────────────────────────────────
 async function captureAudio() {
   const mode = state.audioMode;
-
   if (mode === 'mic') {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    state.streams.push({ stream, source: 'mic' });
-
+    state.streams.push({ stream: await navigator.mediaDevices.getUserMedia({audio:true,video:false}), source:'mic' });
   } else if (mode === 'system') {
-    const stream = await getSystemAudio();
-    state.streams.push({ stream, source: 'system' });
-
-  } else if (mode === 'both') {
-    const [micStream, sysStream] = await Promise.all([
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false }),
+    state.streams.push({ stream: await getSystemAudio(), source:'system' });
+  } else {
+    const [mic, sys] = await Promise.all([
+      navigator.mediaDevices.getUserMedia({audio:true,video:false}),
       getSystemAudio(),
     ]);
-    // Merge into one stream via AudioContext
     const ctx = new AudioContext();
     const dest = ctx.createMediaStreamDestination();
-    ctx.createMediaStreamSource(micStream).connect(dest);
-    ctx.createMediaStreamSource(sysStream).connect(dest);
-    state.streams.push({ stream: dest.stream, source: 'auto', ctx });
-    // Keep original streams for cleanup
-    state._rawMicStream = micStream;
-    state._rawSysStream = sysStream;
+    ctx.createMediaStreamSource(mic).connect(dest);
+    ctx.createMediaStreamSource(sys).connect(dest);
+    state.streams.push({ stream: dest.stream, source:'auto', ctx });
+    state._rawMicStream = mic;
+    state._rawSysStream = sys;
   }
 }
 
 async function getSystemAudio() {
-  // Chrome requires video:true for getDisplayMedia
   const display = await navigator.mediaDevices.getDisplayMedia({
-    audio: {
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-    },
-    video: true,   // required by Chrome
+    audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false },
+    video: true,  // Chrome requires video:true
   });
-  // Stop video tracks — we only want audio
   display.getVideoTracks().forEach(t => t.stop());
-  const audioTracks = display.getAudioTracks();
-  if (!audioTracks.length) {
-    throw new Error('No audio captured. Make sure to check "Share audio" in the screen share dialog.');
-  }
-  return new MediaStream(audioTracks);
+  const audio = display.getAudioTracks();
+  if (!audio.length) throw new Error('No audio captured. Check "Share audio" in the screen share dialog.');
+  return new MediaStream(audio);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WebSocket connection
+// WebSocket
 // ─────────────────────────────────────────────────────────────────────────────
 function connectWebSocket() {
   const wsBase = state.backendUrl.replace(/^http/, 'ws');
   const src = state.audioMode === 'mic' ? 'mic' : 'auto';
-  const url = `${wsBase}/api/v1/transcription/live/${state.interviewId}?source=${src}`;
-
-  const ws = new WebSocket(url);
+  const ws = new WebSocket(`${wsBase}/api/v1/transcription/live/${state.interviewId}?source=${src}`);
   ws.binaryType = 'arraybuffer';
   state.ws = ws;
 
-  ws.onopen = () => {
-    state.isConnected = true;
-    updateBadge('live');
-    setStatus('Connected — listening for questions…');
-    startRecording();
-  };
-
-  ws.onmessage = (evt) => {
-    if (typeof evt.data === 'string') {
-      handleMessage(JSON.parse(evt.data));
-    }
-  };
-
-  ws.onclose = (evt) => {
+  ws.onopen  = () => { state.isConnected=true; updateBadge('live'); setStatus('Connected — listening…'); startRecording(); };
+  ws.onmessage = e => { if (typeof e.data==='string') handleMessage(JSON.parse(e.data)); };
+  ws.onclose = e => {
     state.isConnected = false;
-    if (evt.code !== 1000 && evt.code !== 4004) {
+    if (e.code !== 1000 && e.code !== 4004) {
       updateBadge('paused');
-      setStatus('Disconnected — attempting reconnect…');
+      setStatus('Reconnecting…');
       setTimeout(() => { if (!state.ws || state.ws.readyState === WebSocket.CLOSED) connectWebSocket(); }, 2000);
     }
   };
-
-  ws.onerror = () => {
-    setStatus('WebSocket error — check backend is running');
-  };
+  ws.onerror = () => setStatus('WebSocket error — backend running?');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Audio recording → WebSocket streaming
+// Recording
 // ─────────────────────────────────────────────────────────────────────────────
 function startRecording() {
-  const TIMESLICE_MS = 3000;  // send audio every 3 seconds
-  const mimeType = getSupportedMimeType();
-
+  const TIMESLICE = 3000;
+  const mimeType  = getSupportedMimeType();
   state.streams.forEach(({ stream }) => {
-    let options = { mimeType };
     let recorder;
-    try {
-      recorder = new MediaRecorder(stream, options);
-    } catch (_) {
-      recorder = new MediaRecorder(stream);
-    }
+    try { recorder = new MediaRecorder(stream, {mimeType}); }
+    catch(_) { recorder = new MediaRecorder(stream); }
 
     recorder.ondataavailable = async (e) => {
-      if (e.data && e.data.size > 0 && state.ws && state.ws.readyState === WebSocket.OPEN && !state.isPaused) {
-        const buf = await e.data.arrayBuffer();
-        state.ws.send(buf);
+      if (e.data?.size > 0 && state.ws?.readyState === WebSocket.OPEN && !state.isPaused) {
+        state.ws.send(await e.data.arrayBuffer());
         setAudioActive(true);
-        // Dim after a moment if no new audio
-        clearTimeout(recorder._dimTimeout);
-        recorder._dimTimeout = setTimeout(() => setAudioActive(false), TIMESLICE_MS + 500);
+        clearTimeout(recorder._dt);
+        recorder._dt = setTimeout(() => setAudioActive(false), TIMESLICE + 500);
       }
     };
-
-    recorder.start(TIMESLICE_MS);
+    recorder.start(TIMESLICE);
     state.recorders.push(recorder);
   });
 }
 
 function getSupportedMimeType() {
-  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
-  for (const t of types) {
+  for (const t of ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'])
     if (MediaRecorder.isTypeSupported(t)) return t;
-  }
   return '';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// WebSocket message handler
+// Message handler
 // ─────────────────────────────────────────────────────────────────────────────
 function handleMessage(msg) {
   switch (msg.type) {
-    case 'status':
-      setStatus(msg.message);
-      break;
-
-    case 'transcript':
-      addTranscriptSeg(msg);
-      break;
-
-    case 'question_detected':
-      showQuestion(msg.question);
-      break;
-
-    case 'guidance_chunk':
-      appendGuidanceChunk(msg.text);
-      break;
-
-    case 'guidance_done':
-      finalizeGuidance();
-      break;
-
-    case 'error':
-      setStatus('⚠ ' + msg.message);
-      break;
-
-    case 'session_closed':
-      handleSessionClosed();
-      break;
+    case 'status':           setStatus(msg.message); break;
+    case 'transcript':       addTranscriptSeg(msg); break;
+    case 'question_detected': showQuestion(msg.question); break;
+    case 'guidance_chunk':   appendGuidanceChunk(msg.text); break;
+    case 'guidance_done':    finalizeGuidance(); break;
+    case 'error':            setStatus('⚠ '+msg.message); break;
+    case 'session_closed':   handleSessionClosed(); break;
   }
 }
 
@@ -1097,13 +1035,13 @@ function handleMessage(msg) {
 // ─────────────────────────────────────────────────────────────────────────────
 function addTranscriptSeg(seg) {
   state.transcriptSegs.push(seg);
-  const list = $('transcript-list');
   const el = document.createElement('div');
   el.className = `transcript-seg ${seg.speaker}`;
   el.innerHTML = `<div class="seg-speaker">${escHtml(seg.speaker)}</div><div>${escHtml(seg.text)}</div>`;
+  const list = $('transcript-list');
   list.appendChild(el);
   list.scrollTop = list.scrollHeight;
-  $('seg-count').textContent = `${state.transcriptSegs.length} segment${state.transcriptSegs.length !== 1 ? 's' : ''}`;
+  $('seg-count').textContent = `${state.transcriptSegs.length} seg${state.transcriptSegs.length!==1?'s':''}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1111,22 +1049,15 @@ function addTranscriptSeg(seg) {
 // ─────────────────────────────────────────────────────────────────────────────
 function showQuestion(q) {
   state.questions.push(q);
-  const n = state.questions.length;
   $('question-box').classList.add('visible');
   $('question-text').textContent = q.text;
   $('q-type-chip').textContent = q.type || 'technical';
-  $('q-count-pill').textContent = `Q${n}`;
-
-  const rewrittenEl = $('question-rewritten');
+  $('q-count-pill').textContent = `Q${state.questions.length}`;
+  const rw = $('question-rewritten');
   if (q.rewritten_text && q.rewritten_text !== q.text) {
-    rewrittenEl.textContent = '↳ ' + q.rewritten_text;
-    rewrittenEl.style.display = 'block';
-  } else {
-    rewrittenEl.style.display = 'none';
-  }
+    rw.textContent = '↳ '+q.rewritten_text; rw.style.display='block';
+  } else { rw.style.display='none'; }
   $('q-followup-chip').style.display = q.is_followup ? 'inline-flex' : 'none';
-
-  // Reset guidance area
   state.currentGuidance = '';
   state.isStreaming = true;
   $('guidance-placeholder').style.display = 'none';
@@ -1140,14 +1071,9 @@ function showQuestion(q) {
 function appendGuidanceChunk(text) {
   state.currentGuidance += text;
   const cursor = $('cursor');
-  const body = $('guidance-body');
-  if (cursor) {
-    // Insert rendered HTML before the cursor
-    cursor.insertAdjacentHTML('beforebegin', renderGuidance(text));
-  } else {
-    body.innerHTML = renderGuidanceAll(state.currentGuidance) + '<span class="cursor-blink" id="cursor"></span>';
-  }
-  body.scrollTop = body.scrollHeight;
+  if (cursor) { cursor.insertAdjacentHTML('beforebegin', escHtml(text)); }
+  else { $('guidance-body').innerHTML = renderGuidanceAll(state.currentGuidance)+'<span class="cursor-blink" id="cursor"></span>'; }
+  $('guidance-body').scrollTop = $('guidance-body').scrollHeight;
 }
 
 function finalizeGuidance() {
@@ -1157,29 +1083,18 @@ function finalizeGuidance() {
   $('guidance-body').scrollTop = $('guidance-body').scrollHeight;
 }
 
-function renderGuidance(rawChunk) {
-  // Only escape HTML — don't do full markdown on chunks (could break mid-token)
-  return escHtml(rawChunk);
-}
-
 function renderGuidanceAll(text) {
-  // Simple markdown: bold, bullets, numbered lists, section headers
   let html = escHtml(text);
-  // Bold: **text**
   html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  // Bullets: lines starting with • or - or *
   html = html.replace(/^[•\-\*]\s+(.+)$/gm, '<li>$1</li>');
-  // Numbered: lines starting with 1. 2. etc.
   html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-  // Wrap consecutive <li> in <ul>
-  html = html.replace(/(<li>.*?<\/li>(\n)?)+/g, m => `<ul>${m}</ul>`);
-  // Newlines to <br>
+  html = html.replace(/(<li>.*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
   html = html.replace(/\n/g, '<br>');
   return html;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Copy guidance
+// Copy
 // ─────────────────────────────────────────────────────────────────────────────
 $('copy-btn').addEventListener('click', () => {
   if (!state.currentGuidance) return;
@@ -1190,14 +1105,12 @@ $('copy-btn').addEventListener('click', () => {
 // Manual question
 // ─────────────────────────────────────────────────────────────────────────────
 $('send-manual-btn').addEventListener('click', sendManualQuestion);
-$('manual-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendManualQuestion(); }
-});
+$('manual-input').addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendManualQuestion();} });
 
 function sendManualQuestion() {
   const text = $('manual-input').value.trim();
-  if (!text || !state.ws || state.ws.readyState !== WebSocket.OPEN) return;
-  state.ws.send(JSON.stringify({ type: 'manual_question', question: text }));
+  if (!text || state.ws?.readyState !== WebSocket.OPEN) return;
+  state.ws.send(JSON.stringify({type:'manual_question',question:text}));
   $('manual-input').value = '';
   setStatus('Processing question…');
 }
@@ -1210,54 +1123,36 @@ $('end-btn').addEventListener('click', endSession);
 
 function togglePause() {
   state.isPaused = !state.isPaused;
-  if (state.isPaused) {
-    state.recorders.forEach(r => { if (r.state === 'recording') r.pause(); });
-    $('pause-btn').textContent = '▶ Resume';
-    updateBadge('paused');
-    setStatus('Paused');
-  } else {
-    state.recorders.forEach(r => { if (r.state === 'paused') r.resume(); });
-    $('pause-btn').textContent = '⏸ Pause';
-    updateBadge('live');
-    setStatus('Listening…');
-  }
+  state.recorders.forEach(r => { try { state.isPaused ? r.pause() : r.resume(); } catch(_){} });
+  $('pause-btn').textContent = state.isPaused ? '▶ Resume' : '⏸ Pause';
+  updateBadge(state.isPaused ? 'paused' : 'live');
+  setStatus(state.isPaused ? 'Paused' : 'Listening…');
 }
 
 function endSession() {
-  if (state.ws && state.ws.readyState === WebSocket.OPEN) {
-    state.ws.send(JSON.stringify({ type: 'end' }));
-  }
-  cleanupAudio();
-  stopTimer();
-  setTimeout(() => switchScreen('setup'), 500);
+  if (state.ws?.readyState === WebSocket.OPEN) state.ws.send(JSON.stringify({type:'end'}));
+  cleanupAudio(); stopTimer();
+  setTimeout(() => switchScreen('setup'), 400);
 }
 
-function handleSessionClosed() {
-  cleanupAudio();
-  stopTimer();
-  switchScreen('setup');
-  showToast('Session saved.');
-}
+function handleSessionClosed() { cleanupAudio(); stopTimer(); switchScreen('setup'); showToast('Session saved.'); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cleanup
 // ─────────────────────────────────────────────────────────────────────────────
 function cleanupAudio() {
-  state.recorders.forEach(r => { try { r.stop(); } catch(_) {} });
+  state.recorders.forEach(r => { try { r.stop(); } catch(_){} });
   state.recorders = [];
-  state.streams.forEach(({ stream, ctx }) => {
-    stream.getTracks().forEach(t => t.stop());
-    if (ctx) ctx.close();
-  });
+  state.streams.forEach(({stream,ctx}) => { stream.getTracks().forEach(t=>t.stop()); if(ctx) ctx.close(); });
   state.streams = [];
-  if (state._rawMicStream) { state._rawMicStream.getTracks().forEach(t => t.stop()); }
-  if (state._rawSysStream) { state._rawSysStream.getTracks().forEach(t => t.stop()); }
-  if (state.ws) { state.ws.onclose = null; state.ws.close(1000); state.ws = null; }
+  [state._rawMicStream, state._rawSysStream].forEach(s => s?.getTracks().forEach(t=>t.stop()));
+  state._rawMicStream = state._rawSysStream = null;
+  if (state.ws) { state.ws.onclose=null; state.ws.close(1000); state.ws=null; }
   state.isConnected = false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Back button (end session and return to setup)
+// Back button
 // ─────────────────────────────────────────────────────────────────────────────
 $('back-btn').addEventListener('click', () => {
   if (state.isConnected) endSession();
@@ -1267,18 +1162,13 @@ $('back-btn').addEventListener('click', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // Transcript drawer
 // ─────────────────────────────────────────────────────────────────────────────
-$('drawer-toggle').addEventListener('click', () => {
-  $('transcript-drawer').classList.toggle('open');
-});
+$('drawer-toggle').addEventListener('click', () => $('transcript-drawer').classList.toggle('open'));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Compact mode
 // ─────────────────────────────────────────────────────────────────────────────
 $('compact-btn').addEventListener('click', toggleCompact);
-function toggleCompact() {
-  document.body.classList.toggle('compact');
-  $('compact-btn').title = document.body.classList.contains('compact') ? 'Expand (Ctrl+K)' : 'Compact (Ctrl+K)';
-}
+function toggleCompact() { document.body.classList.toggle('compact'); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Timer
@@ -1288,15 +1178,13 @@ function startTimer() {
   state.timerInterval = setInterval(() => {
     if (!state.isPaused) {
       state.elapsed++;
-      const m = String(Math.floor(state.elapsed / 60)).padStart(2, '0');
-      const s = String(state.elapsed % 60).padStart(2, '0');
+      const m = String(Math.floor(state.elapsed/60)).padStart(2,'0');
+      const s = String(state.elapsed%60).padStart(2,'0');
       $('live-timer').textContent = `${m}:${s}`;
     }
   }, 1000);
 }
-function stopTimer() {
-  clearInterval(state.timerInterval);
-}
+function stopTimer() { clearInterval(state.timerInterval); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // UI helpers
@@ -1305,16 +1193,13 @@ function switchScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(`screen-${name}`).classList.add('active');
   if (name === 'setup') {
-    // Reset live state for re-entry
-    state.questions = [];
-    state.transcriptSegs = [];
-    state.currentGuidance = '';
-    $('guidance-body').innerHTML = '<div class="guidance-placeholder" id="guidance-placeholder"><span class="icon">🎙</span><span>Listening for interview questions…</span><span style="font-size:11px;">Guidance will appear here when a question is detected.</span></div>';
+    state.questions=[]; state.transcriptSegs=[]; state.currentGuidance='';
+    $('guidance-body').innerHTML='<div class="guidance-placeholder" id="guidance-placeholder"><span class="icon">🎙</span><span>Listening for questions…</span><span style="font-size:11px;">Guidance streams here when a question is detected.</span></div>';
     $('question-box').classList.remove('visible');
-    $('transcript-list').innerHTML = '';
-    $('seg-count').textContent = '0 segments';
-    $('live-timer').textContent = '00:00';
-    $('pause-btn').textContent = '⏸ Pause';
+    $('transcript-list').innerHTML='';
+    $('seg-count').textContent='0 segments';
+    $('live-timer').textContent='00:00';
+    $('pause-btn').textContent='⏸ Pause';
     loadRecentSessions();
   }
 }
@@ -1322,51 +1207,52 @@ function switchScreen(name) {
 function updateBadge(type) {
   const el = $('live-badge');
   el.className = 'badge';
-  if (type === 'live') { el.classList.add('badge-live'); el.textContent = 'LIVE'; }
-  else if (type === 'paused') { el.classList.add('badge-paused'); el.textContent = 'PAUSED'; }
-  else { el.classList.add('badge-connecting'); el.textContent = 'Connecting'; }
+  if (type==='live')       { el.classList.add('badge-live');       el.textContent='LIVE'; }
+  else if (type==='paused'){ el.classList.add('badge-paused');     el.textContent='PAUSED'; }
+  else                     { el.classList.add('badge-connecting'); el.textContent='Connecting'; }
 }
 
-function setStatus(msg) {
-  $('status-text').textContent = msg;
-}
-
-function setAudioActive(active) {
-  const ind = $('audio-indicator');
-  if (active) ind.classList.remove('silent');
-  else ind.classList.add('silent');
-}
+function setStatus(msg)         { $('status-text').textContent = msg; }
+function setAudioActive(active) { $('audio-indicator').classList.toggle('silent', !active); }
 
 function showToast(msg) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  const t = $('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Keyboard shortcuts
 // ─────────────────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.ctrlKey && e.key === 'k') { e.preventDefault(); toggleCompact(); }
+  // Ctrl+Shift+H — panic hide (OS-level in Electron, overlay in browser)
+  if (e.ctrlKey && e.shiftKey && e.key === 'H') {
+    e.preventDefault();
+    if (panicActive) deactivatePanic(); else activatePanic();
+    return;
+  }
+  // Ctrl+K — compact mode
+  if (e.ctrlKey && e.key === 'k') { e.preventDefault(); toggleCompact(); return; }
+  // Ctrl+M — focus manual question input
   if (e.ctrlKey && e.key === 'm') {
     e.preventDefault();
     if ($('screen-live').classList.contains('active')) $('manual-input').focus();
+    return;
   }
+  // Escape — dismiss panic overlay
+  if (e.key === 'Escape' && panicActive) { deactivatePanic(); return; }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Init
 // ─────────────────────────────────────────────────────────────────────────────
 (async () => {
-  // Load backend URL from localStorage if saved
   const saved = localStorage.getItem('copilot_backend_url');
   if (saved) $('backend-url-input').value = saved;
 
+  initPrivacy();
   await checkBackend();
   await loadRecentSessions();
 
-  // Save backend URL on change
   $('backend-url-input').addEventListener('change', () => {
     localStorage.setItem('copilot_backend_url', $('backend-url-input').value);
     checkBackend().then(() => loadRecentSessions());
