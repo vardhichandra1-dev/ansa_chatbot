@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" font-family="'Segoe UI', system-ui, sans-serif">
+  <!-- Background -->
+  <rect width="1200" height="750" fill="#0f1117"/>
+
+  <!-- Top navbar -->
+  <rect width="1200" height="56" fill="#1a1d27"/>
+  <rect x="0" y="55" width="1200" height="1" fill="#2d3148"/>
+
+  <!-- Logo -->
+  <circle cx="32" cy="28" r="14" fill="#6366f1"/>
+  <text x="32" cy="28" text-anchor="middle" fill="white" font-size="13" font-weight="700" dy="5">AI</text>
+  <text x="56" y="33" fill="#e2e8f0" font-size="15" font-weight="600">Interview Copilot</text>
+
+  <!-- Nav items -->
+  <text x="520" y="33" fill="#6366f1" font-size="13" font-weight="600">Live Interview</text>
+  <text x="630" y="33" fill="#94a3b8" font-size="13">Mock Interview</text>
+  <text x="740" y="33" fill="#94a3b8" font-size="13">Analytics</text>
+  <text x="820" y="33" fill="#94a3b8" font-size="13">Setup</text>
+
+  <!-- Interview title + LIVE badge -->
+  <text x="24" y="88" fill="#e2e8f0" font-size="18" font-weight="700">Google — Senior Software Engineer Interview</text>
+  <rect x="390" y="72" width="56" height="22" rx="11" fill="#ef4444"/>
+  <circle cx="400" cy="83" r="4" fill="white" opacity="0.9"/>
+  <text x="408" y="87" fill="white" font-size="11" font-weight="700">LIVE</text>
+  <!-- Timer -->
+  <text x="1100" y="88" fill="#64748b" font-size="13">⏱ 00:12:38</text>
+  <!-- Stop button -->
+  <rect x="1140" y="68" width="48" height="26" rx="6" fill="#ef4444" opacity="0.15"/>
+  <text x="1164" y="85" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="600">Stop</text>
+
+  <!-- ── LEFT PANEL: Transcript ────────────────────────── -->
+  <rect x="16" y="105" width="560" height="620" rx="12" fill="#1a1d27"/>
+  <rect x="16" y="105" width="560" height="1" fill="#2d3148"/>
+  <text x="36" y="133" fill="#e2e8f0" font-size="14" font-weight="600">Live Transcript</text>
+  <circle cx="162" cy="127" r="5" fill="#22c55e"/>
+  <text x="172" y="131" fill="#22c55e" font-size="11">Recording</text>
+
+  <!-- Transcript segment 1 — INTERVIEWER -->
+  <rect x="32" y="148" width="528" height="72" rx="8" fill="#1e2235"/>
+  <rect x="32" y="148" width="4" height="72" rx="2" fill="#f59e0b"/>
+  <text x="48" y="167" fill="#f59e0b" font-size="11" font-weight="700">INTERVIEWER  •  00:01:24</text>
+  <text x="48" y="185" fill="#cbd5e1" font-size="13">Can you walk me through how you would design</text>
+  <text x="48" y="202" fill="#cbd5e1" font-size="13">a distributed caching system for a high-traffic API?</text>
+
+  <!-- Transcript segment 2 — YOU -->
+  <rect x="32" y="232" width="528" height="88" rx="8" fill="#1e2235"/>
+  <rect x="32" y="232" width="4" height="88" rx="2" fill="#6366f1"/>
+  <text x="48" y="251" fill="#6366f1" font-size="11" font-weight="700">YOU  •  00:02:01</text>
+  <text x="48" y="269" fill="#cbd5e1" font-size="13">Sure. I'd start by identifying the access patterns —</text>
+  <text x="48" y="287" fill="#cbd5e1" font-size="13">whether we need read-through, write-through, or</text>
+  <text x="48" y="305" fill="#cbd5e1" font-size="13">write-behind caching, depending on consistency needs...</text>
+
+  <!-- Transcript segment 3 — INTERVIEWER (current, with cursor) -->
+  <rect x="32" y="332" width="528" height="60" rx="8" fill="#1e2235"/>
+  <rect x="32" y="332" width="4" height="60" rx="2" fill="#f59e0b"/>
+  <text x="48" y="351" fill="#f59e0b" font-size="11" font-weight="700">INTERVIEWER  •  00:08:12</text>
+  <text x="48" y="371" fill="#cbd5e1" font-size="13">What about cache invalidation strategies?</text>
+
+  <!-- Live audio waveform -->
+  <rect x="32" y="408" width="528" height="50" rx="8" fill="#151822"/>
+  <text x="48" y="427" fill="#64748b" font-size="11">Listening...</text>
+  <!-- Waveform bars -->
+  <g fill="#6366f1" opacity="0.6">
+    <rect x="130" y="420" width="4" height="12" rx="2"/>
+    <rect x="138" y="416" width="4" height="20" rx="2"/>
+    <rect x="146" y="422" width="4" height="8" rx="2"/>
+    <rect x="154" y="414" width="4" height="24" rx="2"/>
+    <rect x="162" y="419" width="4" height="14" rx="2"/>
+    <rect x="170" y="417" width="4" height="18" rx="2"/>
+    <rect x="178" y="421" width="4" height="10" rx="2"/>
+    <rect x="186" y="415" width="4" height="22" rx="2"/>
+    <rect x="194" y="420" width="4" height="12" rx="2"/>
+    <rect x="202" y="418" width="4" height="16" rx="2"/>
+  </g>
+
+  <!-- Manual question input -->
+  <rect x="32" y="474" width="528" height="44" rx="8" fill="#151822" stroke="#2d3148" stroke-width="1"/>
+  <text x="52" y="500" fill="#475569" font-size="13">Type a question manually...</text>
+  <rect x="512" y="480" width="36" height="28" rx="6" fill="#6366f1"/>
+  <text x="530" y="499" text-anchor="middle" fill="white" font-size="12">→</text>
+
+  <!-- ── RIGHT PANEL: Guidance ────────────────────────── -->
+  <rect x="592" y="105" width="592" height="620" rx="12" fill="#1a1d27"/>
+
+  <!-- Question Detected badge -->
+  <rect x="608" y="118" width="560" height="88" rx="10" fill="#1e2235" stroke="#6366f1" stroke-width="1"/>
+  <rect x="608" y="118" width="4" height="88" rx="2" fill="#6366f1"/>
+  <rect x="624" y="126" width="130" height="22" rx="5" fill="#6366f1" opacity="0.2"/>
+  <text x="634" y="141" fill="#818cf8" font-size="11" font-weight="700">QUESTION DETECTED</text>
+  <rect x="772" y="126" width="70" height="22" rx="5" fill="#0ea5e9" opacity="0.15"/>
+  <text x="778" y="141" fill="#38bdf8" font-size="11">system_design</text>
+  <text x="624" y="162" fill="#e2e8f0" font-size="13" font-weight="500">What about cache invalidation strategies?</text>
+  <text x="624" y="181" fill="#64748b" font-size="11">detected 0:08:12  •  follow-up: Yes  •  topic: Caching</text>
+  <text x="624" y="196" fill="#94a3b8" font-size="12" font-style="italic">↳ "How would you handle cache invalidation in your distributed caching design?"</text>
+
+  <!-- Guidance heading -->
+  <text x="624" y="230" fill="#e2e8f0" font-size="14" font-weight="600">Answer Guidance</text>
+  <rect x="735" y="216" width="80" height="20" rx="4" fill="#22c55e" opacity="0.15"/>
+  <text x="745" y="229" fill="#4ade80" font-size="11">● Streaming</text>
+
+  <!-- Guidance content -->
+  <rect x="608" y="240" width="560" height="340" rx="10" fill="#151822"/>
+
+  <!-- Key points -->
+  <text x="624" y="264" fill="#818cf8" font-size="13" font-weight="700">Key points:</text>
+  <text x="632" y="283" fill="#94a3b8" font-size="12">•  TTL-based expiration: simple, works for most read-heavy scenarios</text>
+  <text x="632" y="300" fill="#94a3b8" font-size="12">•  Event-driven invalidation: pub/sub on writes (Redis keyspace notifications)</text>
+  <text x="632" y="317" fill="#94a3b8" font-size="12">•  Write-through consistency: update cache on every DB write</text>
+  <text x="632" y="334" fill="#94a3b8" font-size="12">•  Cache-aside with versioned keys: append version hash to cache key</text>
+
+  <!-- From your experience -->
+  <text x="624" y="358" fill="#818cf8" font-size="13" font-weight="700">From your experience:</text>
+  <text x="632" y="377" fill="#94a3b8" font-size="12">•  Mention real system you built — e.g., Redis-backed session store handling 10k RPS</text>
+  <text x="632" y="394" fill="#94a3b8" font-size="12">•  Reference trade-offs you encountered: eventual consistency vs. stale reads</text>
+
+  <!-- Framework -->
+  <text x="624" y="418" fill="#818cf8" font-size="13" font-weight="700">Framework: Technical Steps</text>
+  <text x="632" y="437" fill="#94a3b8" font-size="12">1.  Identify cache scope (L1 local / L2 distributed / CDN)</text>
+  <text x="632" y="454" fill="#94a3b8" font-size="12">2.  Choose invalidation strategy based on consistency SLA</text>
+  <text x="632" y="471" fill="#94a3b8" font-size="12">3.  Plan for stampede protection (probabilistic early expiry / locks)</text>
+
+  <!-- Avoid -->
+  <text x="624" y="495" fill="#818cf8" font-size="13" font-weight="700">Avoid:</text>
+  <text x="632" y="514" fill="#94a3b8" font-size="12">•  Don't say "just set a short TTL" without addressing consistency guarantees</text>
+
+  <!-- Streaming cursor -->
+  <rect x="632" y="524" width="8" height="14" rx="1" fill="#6366f1" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Previous questions sidebar hint -->
+  <rect x="608" y="594" width="560" height="48" rx="8" fill="#1e2235"/>
+  <text x="624" y="612" fill="#64748b" font-size="11" font-weight="600">EARLIER QUESTIONS</text>
+  <text x="624" y="630" fill="#475569" font-size="12">Design a URL shortener  •  Explain CAP theorem  •  +4 more</text>
+</svg>
