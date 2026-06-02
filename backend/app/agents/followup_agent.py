@@ -4,84 +4,29 @@ import json
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.agents.base import get_llm
+from app.agents.base import get_fast_llm
 
-SYSTEM_PROMPT = """You are an expert at understanding interview conversation context.
-
-Given a new question and conversation history, determine:
-1. Is this a follow-up question to a previous question?
-2. If yes, which question is it following up on (by index)?
-3. Rewrite the question to be self-contained with full context.
-
-Return JSON:
-{
-  "is_followup": boolean,
-  "parent_index": number | null,
-  "rewritten_question": "The fully self-contained version of the question",
-  "reasoning": "Brief explanation"
-}
-
-Return only valid JSON, no markdown."""
+# Compact prompt — Haiku handles this classification task well with fewer tokens
+SYSTEM_PROMPT = """Determine if this interview question is a follow-up to the conversation.
+Return JSON: {"is_followup": bool, "rewritten_question": "self-contained version of the question"}
+If not a follow-up, rewritten_question = original question. Return ONLY JSON, no markdown."""
 
 
 async def analyze_followup(
     new_question: str,
     conversation_history: list[dict],
 ) -> dict:
-    """
-    Determine if a question is a follow-up and rewrite it with context.
+    # Only pass last 4 turns — enough context, fewer tokens
+    recent = conversation_history[-4:]
+    history_text = "\n".join(f"[{h['role'].upper()}]: {h['text']}" for h in recent)
 
-    conversation_history items: {"role": "interviewer|candidate", "text": "...", "timestamp": ...}
-    """
-    history_text = "\n".join(
-        f"[{item['role'].upper()}]: {item['text']}"
-        for item in conversation_history[-10:]
-    )
-
-    llm = get_llm(temperature=0.0)
-    response = await llm.ainvoke(
-        [
-            SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(
-                content=f"Conversation so far:\n{history_text}\n\nNew question: {new_question}"
-            ),
-        ]
-    )
+    llm = get_fast_llm(temperature=0.0)
+    response = await llm.ainvoke([
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=f"Conversation:\n{history_text}\n\nNew question: {new_question}"),
+    ])
 
     try:
-        result = json.loads(response.content)
+        return json.loads(response.content)
     except (json.JSONDecodeError, AttributeError):
-        result = {
-            "is_followup": False,
-            "parent_index": None,
-            "rewritten_question": new_question,
-            "reasoning": "Could not parse LLM response",
-        }
-
-    return result
-
-
-async def rewrite_question_with_context(
-    question: str,
-    resume_context: str,
-    conversation_context: str,
-) -> str:
-    """Rewrite a vague follow-up using resume and conversation context."""
-    llm = get_llm(temperature=0.1)
-    response = await llm.ainvoke(
-        [
-            SystemMessage(
-                content="Rewrite the question to be fully self-contained. "
-                "Use the resume and conversation context to fill in implied references. "
-                "Return only the rewritten question, no explanation."
-            ),
-            HumanMessage(
-                content=(
-                    f"Resume context:\n{resume_context}\n\n"
-                    f"Recent conversation:\n{conversation_context}\n\n"
-                    f"Question to rewrite: {question}"
-                )
-            ),
-        ]
-    )
-    return response.content.strip()
+        return {"is_followup": False, "rewritten_question": new_question}

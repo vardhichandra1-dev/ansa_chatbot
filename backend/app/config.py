@@ -18,9 +18,6 @@ class Settings(BaseSettings):
 
     # Application
     app_env: Literal["development", "staging", "production"] = "development"
-    secret_key: str = "dev-secret-key-change-in-production"
-    access_token_expire_minutes: int = 60
-    refresh_token_expire_days: int = 30
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/interview_copilot"
@@ -32,7 +29,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     primary_llm_provider: Literal["anthropic", "openai"] = "anthropic"
-    primary_model: str = "claude-sonnet-4-6"
+    primary_model: str = "claude-sonnet-4-6"          # guidance generation
+    fast_model: str = "claude-haiku-4-5-20251001"     # question detection + followup analysis
     fallback_model: str = "gpt-4o"
 
     # Vector store

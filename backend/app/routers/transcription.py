@@ -3,32 +3,43 @@ Live Interview Transcription & Assistance Router
 =================================================
 
 PRIMARY ENDPOINT — WebSocket /live/{interview_id}
-  The real-time interview assistant. Client streams audio chunks;
-  server pushes back transcript + question detection + answer guidance.
+
+Optimized latency timeline per audio chunk:
+  T+0.0s  Audio chunk arrives (16KB buffer ≈ 1 second of audio)
+  T+0.8s  Transcript pushed to client (Whisper)
+  T+1.0s  Heuristic pre-filter (no LLM cost for "okay / I see / hmm")
+  T+1.3s  Question pushed to client immediately (Haiku detection)
+  T+1.3s  Lock released — next audio chunk starts processing
+  T+1.8s  Follow-up rewrite + ChromaDB fetches complete (parallel)
+  T+1.8s  First guidance tokens start streaming (Sonnet streaming)
+  T+3.5s  Full guidance delivered
 
 WebSocket message protocol:
 
   Client → Server (binary):
-    Raw audio bytes (webm/opus/mp3, any format Whisper accepts)
+    Raw audio bytes (webm/opus/mp3 — any format Whisper accepts)
 
   Client → Server (text/JSON):
     {"type": "manual_question", "question": "Tell me about RAG"}
-    {"type": "flush"}   → process any buffered audio immediately
-    {"type": "end"}     → close session and save transcript
+    {"type": "flush"}   — process current buffer immediately
+    {"type": "end"}     — save transcript + close session
 
   Server → Client (JSON):
-    {"type": "transcript",       "speaker": "interviewer|candidate",
-     "text": "...",              "start_time": 0.0, "end_time": 2.1}
+    {"type": "transcript",        "speaker": "interviewer|candidate",
+                                  "text": "...", "start_time": 0.0, "end_time": 1.2}
 
     {"type": "question_detected", "question": {
-       "text": "...", "rewritten_text": "...",
-       "type": "technical|behavioral|system_design|coding",
-       "topic": "RAG", "is_followup": false,
-       "timestamp_seconds": 45.2
-     }, "guidance": "**Key points:**\n- ..."}
+        "text": "...", "rewritten_text": "...",
+        "type": "technical|behavioral|system_design|coding",
+        "topic": "RAG", "is_followup": false,
+        "timestamp_seconds": 45.2},
+     "guidance": null}             ← null here; guidance arrives via next two messages
 
-    {"type": "status", "message": "Transcribing..."}
-    {"type": "error",  "message": "Transcription failed: ..."}
+    {"type": "guidance_chunk",    "text": "**Key points"}  ← streamed token by token
+    {"type": "guidance_done"}                              ← guidance complete
+
+    {"type": "status",  "message": "..."}
+    {"type": "error",   "message": "..."}
     {"type": "session_closed"}
 """
 from __future__ import annotations
@@ -51,9 +62,9 @@ from app.services.vector_store_service import get_vector_store
 
 router = APIRouter(prefix="/transcription", tags=["transcription"])
 
-# Audio chunks smaller than this are buffered and merged before sending to Whisper.
-# ~2 seconds of audio at 128 kbps ≈ 32 KB.
-_CHUNK_SIZE = 32_768
+# Buffer size: 16KB ≈ 1 second of audio at 128kbps.
+# Smaller = lower latency; too small (< 8KB) degrades Whisper accuracy.
+_CHUNK_SIZE = 16_384
 
 
 # ── WebSocket — Live Interview (PRIMARY FEATURE) ────────────────────────────
