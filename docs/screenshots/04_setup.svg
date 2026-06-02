@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" font-family="'Segoe UI', system-ui, sans-serif">
+  <!-- Background -->
+  <rect width="1200" height="750" fill="#0f1117"/>
+
+  <!-- Top navbar -->
+  <rect width="1200" height="56" fill="#1a1d27"/>
+  <rect x="0" y="55" width="1200" height="1" fill="#2d3148"/>
+  <circle cx="32" cy="28" r="14" fill="#6366f1"/>
+  <text x="32" y="33" text-anchor="middle" fill="white" font-size="13" font-weight="700">AI</text>
+  <text x="56" y="33" fill="#e2e8f0" font-size="15" font-weight="600">Interview Copilot</text>
+  <text x="520" y="33" fill="#94a3b8" font-size="13">Live Interview</text>
+  <text x="625" y="33" fill="#94a3b8" font-size="13">Mock Interview</text>
+  <text x="740" y="33" fill="#94a3b8" font-size="13">Analytics</text>
+  <text x="820" y="33" fill="#6366f1" font-size="13" font-weight="600">Setup</text>
+
+  <!-- Page heading -->
+  <text x="24" y="88" fill="#e2e8f0" font-size="18" font-weight="700">Profile &amp; Setup</text>
+  <text x="180" y="88" fill="#64748b" font-size="13">Configure your AI copilot</text>
+
+  <!-- ── LEFT: Profile Form ────────────────────────────── -->
+  <rect x="16" y="105" width="540" height="612" rx="12" fill="#1a1d27"/>
+  <text x="36" y="133" fill="#e2e8f0" font-size="14" font-weight="600">Your Profile</text>
+
+  <!-- Name field -->
+  <text x="36" y="162" fill="#94a3b8" font-size="12">Full Name</text>
+  <rect x="36" y="170" width="500" height="44" rx="8" fill="#151822" stroke="#2d3148" stroke-width="1"/>
+  <text x="56" y="196" fill="#e2e8f0" font-size="14">Chandramohan Vardhi</text>
+
+  <!-- Target Role -->
+  <text x="36" y="234" fill="#94a3b8" font-size="12">Target Role</text>
+  <rect x="36" y="242" width="500" height="44" rx="8" fill="#151822" stroke="#6366f1" stroke-width="1"/>
+  <text x="56" y="268" fill="#e2e8f0" font-size="14">Senior ML Engineer / GenAI Engineer</text>
+
+  <!-- Target Company -->
+  <text x="36" y="306" fill="#94a3b8" font-size="12">Target Company</text>
+  <rect x="36" y="314" width="500" height="44" rx="8" fill="#151822" stroke="#2d3148" stroke-width="1"/>
+  <text x="56" y="340" fill="#e2e8f0" font-size="14">Google, Meta, Anthropic</text>
+
+  <!-- Years of Experience -->
+  <text x="36" y="378" fill="#94a3b8" font-size="12">Years of Experience</text>
+  <rect x="36" y="386" width="240" height="44" rx="8" fill="#151822" stroke="#2d3148" stroke-width="1"/>
+  <text x="56" y="412" fill="#e2e8f0" font-size="14">4 years</text>
+
+  <!-- Interview date -->
+  <text x="290" y="378" fill="#94a3b8" font-size="12">Interview Date (optional)</text>
+  <rect x="290" y="386" width="246" height="44" rx="8" fill="#151822" stroke="#2d3148" stroke-width="1"/>
+  <text x="310" y="412" fill="#475569" font-size="14">Select date...</text>
+
+  <!-- Focus areas -->
+  <text x="36" y="450" fill="#94a3b8" font-size="12">Focus Topics</text>
+  <g>
+    <rect x="36" y="458" width="120" height="30" rx="6" fill="#6366f1" opacity="0.2"/>
+    <rect x="36" y="458" width="120" height="30" rx="6" fill="none" stroke="#6366f1" stroke-width="1"/>
+    <text x="96" y="477" text-anchor="middle" fill="#818cf8" font-size="12">System Design</text>
+  </g>
+  <g>
+    <rect x="164" y="458" width="140" height="30" rx="6" fill="#6366f1" opacity="0.2"/>
+    <rect x="164" y="458" width="140" height="30" rx="6" fill="none" stroke="#6366f1" stroke-width="1"/>
+    <text x="234" y="477" text-anchor="middle" fill="#818cf8" font-size="12">ML / Deep Learning</text>
+  </g>
+  <g>
+    <rect x="312" y="458" width="110" height="30" rx="6" fill="#6366f1" opacity="0.2"/>
+    <rect x="312" y="458" width="110" height="30" rx="6" fill="none" stroke="#6366f1" stroke-width="1"/>
+    <text x="367" y="477" text-anchor="middle" fill="#818cf8" font-size="12">Algorithms</text>
+  </g>
+  <g>
+    <rect x="430" y="458" width="106" height="30" rx="6" fill="#1e2235"/>
+    <text x="483" y="477" text-anchor="middle" fill="#475569" font-size="12">Behavioral</text>
+  </g>
+  <g>
+    <rect x="36" y="496" width="80" height="30" rx="6" fill="#1e2235"/>
+    <text x="76" y="515" text-anchor="middle" fill="#475569" font-size="12">Databases</text>
+  </g>
+  <g>
+    <rect x="124" y="496" width="130" height="30" rx="6" fill="#1e2235"/>
+    <text x="189" y="515" text-anchor="middle" fill="#475569" font-size="12">Distributed Systems</text>
+  </g>
+  <g>
+    <rect x="262" y="496" width="90" height="30" rx="6" fill="#1e2235"/>
+    <text x="307" y="515" text-anchor="middle" fill="#475569" font-size="12">+ Add topic</text>
+  </g>
+
+  <!-- Save profile button -->
+  <rect x="36" y="542" width="500" height="48" rx="10" fill="#6366f1"/>
+  <text x="286" y="571" text-anchor="middle" fill="white" font-size="14" font-weight="600">Save Profile</text>
+
+  <!-- Divider -->
+  <rect x="36" y="606" width="500" height="1" fill="#2d3148"/>
+
+  <!-- Quick links -->
+  <text x="36" y="628" fill="#64748b" font-size="11" font-weight="600">QUICK ACTIONS</text>
+  <rect x="36" y="638" width="236" height="36" rx="8" fill="#151822"/>
+  <text x="154" y="660" text-anchor="middle" fill="#94a3b8" font-size="12">🗂  Create Interview Session</text>
+  <rect x="280" y="638" width="256" height="36" rx="8" fill="#151822"/>
+  <text x="408" y="660" text-anchor="middle" fill="#94a3b8" font-size="12">🎤  Start Mock Interview</text>
+
+  <!-- ── RIGHT: Resume Management ──────────────────────── -->
+  <rect x="572" y="105" width="612" height="612" rx="12" fill="#1a1d27"/>
+  <text x="592" y="133" fill="#e2e8f0" font-size="14" font-weight="600">Resume</text>
+
+  <!-- Upload dropzone -->
+  <rect x="592" y="148" width="572" height="130" rx="10" fill="#151822" stroke="#2d3148" stroke-width="2" stroke-dasharray="6 3"/>
+  <text x="878" y="198" text-anchor="middle" fill="#64748b" font-size="32">📄</text>
+  <text x="878" y="225" text-anchor="middle" fill="#94a3b8" font-size="13">Drop your resume here or</text>
+  <text x="878" y="244" text-anchor="middle" fill="#6366f1" font-size="13" font-weight="500" text-decoration="underline">browse files</text>
+  <text x="878" y="268" text-anchor="middle" fill="#475569" font-size="11">PDF, DOCX, or TXT  •  Max 50 MB</text>
+
+  <!-- Active resume -->
+  <rect x="592" y="292" width="572" height="86" rx="10" fill="#1e2235" stroke="#22c55e" stroke-width="1"/>
+  <rect x="592" y="292" width="4" height="86" rx="2" fill="#22c55e"/>
+  <text x="616" y="315" fill="#4ade80" font-size="11" font-weight="700">ACTIVE RESUME</text>
+  <text x="616" y="337" fill="#e2e8f0" font-size="14" font-weight="500">Chandramohan_Vardhi_Resume_2024.pdf</text>
+  <text x="616" y="357" fill="#64748b" font-size="12">Uploaded Jun 2, 2026  •  3 pages  •  vectorized ✓</text>
+  <rect x="1072" y="305" width="76" height="28" rx="6" fill="#ef4444" opacity="0.12"/>
+  <text x="1110" y="323" text-anchor="middle" fill="#ef4444" font-size="12">Delete</text>
+
+  <!-- Divider -->
+  <rect x="608" y="390" width="540" height="1" fill="#2d3148"/>
+
+  <!-- Extracted Skills -->
+  <text x="592" y="412" fill="#e2e8f0" font-size="13" font-weight="600">Extracted Skills</text>
+  <text x="1100" y="412" fill="#64748b" font-size="11" text-anchor="end">auto-detected from resume</text>
+
+  <!-- Skill chips -->
+  <g fill="none" stroke="#2d3148" stroke-width="1">
+    <rect x="592" y="422" width="76" height="26" rx="5"/>
+    <rect x="676" y="422" width="72" height="26" rx="5"/>
+    <rect x="756" y="422" width="60" height="26" rx="5"/>
+    <rect x="824" y="422" width="56" height="26" rx="5"/>
+    <rect x="888" y="422" width="72" height="26" rx="5"/>
+    <rect x="968" y="422" width="88" height="26" rx="5"/>
+    <rect x="592" y="456" width="68" height="26" rx="5"/>
+    <rect x="668" y="456" width="56" height="26" rx="5"/>
+    <rect x="732" y="456" width="78" height="26" rx="5"/>
+    <rect x="818" y="456" width="74" height="26" rx="5"/>
+    <rect x="900" y="456" width="100" height="26" rx="5"/>
+    <rect x="592" y="490" width="68" height="26" rx="5"/>
+    <rect x="668" y="490" width="80" height="26" rx="5"/>
+    <rect x="756" y="490" width="72" height="26" rx="5"/>
+    <rect x="836" y="490" width="112" height="26" rx="5"/>
+    <rect x="956" y="490" width="88" height="26" rx="5"/>
+  </g>
+  <text x="630" y="439" text-anchor="middle" fill="#94a3b8" font-size="11">Python</text>
+  <text x="712" y="439" text-anchor="middle" fill="#94a3b8" font-size="11">PyTorch</text>
+  <text x="786" y="439" text-anchor="middle" fill="#94a3b8" font-size="11">LLMs</text>
+  <text x="852" y="439" text-anchor="middle" fill="#94a3b8" font-size="11">RAG</text>
+  <text x="924" y="439" text-anchor="middle" fill="#94a3b8" font-size="11">FastAPI</text>
+  <text x="1012" y="439" text-anchor="middle" fill="#94a3b8" font-size="11">LangChain</text>
+  <text x="626" y="473" text-anchor="middle" fill="#94a3b8" font-size="11">Docker</text>
+  <text x="696" y="473" text-anchor="middle" fill="#94a3b8" font-size="11">Redis</text>
+  <text x="771" y="473" text-anchor="middle" fill="#94a3b8" font-size="11">PostgreSQL</text>
+  <text x="855" y="473" text-anchor="middle" fill="#94a3b8" font-size="11">Kubernetes</text>
+  <text x="950" y="473" text-anchor="middle" fill="#94a3b8" font-size="11">Transformer</text>
+  <text x="626" y="507" text-anchor="middle" fill="#94a3b8" font-size="11">AWS S3</text>
+  <text x="708" y="507" text-anchor="middle" fill="#94a3b8" font-size="11">MLflow</text>
+  <text x="792" y="507" text-anchor="middle" fill="#94a3b8" font-size="11">ChromaDB</text>
+  <text x="892" y="507" text-anchor="middle" fill="#94a3b8" font-size="11">Vector Search</text>
+  <text x="1000" y="507" text-anchor="middle" fill="#94a3b8" font-size="11">Fine-tuning</text>
+
+  <!-- Divider -->
+  <rect x="608" y="528" width="540" height="1" fill="#2d3148"/>
+
+  <!-- Company Prep -->
+  <text x="592" y="552" fill="#e2e8f0" font-size="13" font-weight="600">Company Prep Generator</text>
+  <rect x="592" y="562" width="380" height="44" rx="8" fill="#151822" stroke="#2d3148" stroke-width="1"/>
+  <text x="612" y="588" fill="#475569" font-size="13">Company name (e.g., Google)</text>
+  <rect x="980" y="562" width="192" height="44" rx="8" fill="#6366f1"/>
+  <text x="1076" y="588" text-anchor="middle" fill="white" font-size="13" font-weight="600">Generate Prep Plan</text>
+
+  <!-- API Keys section -->
+  <rect x="592" y="620" width="572" height="76" rx="10" fill="#151822"/>
+  <text x="612" y="643" fill="#94a3b8" font-size="12" font-weight="600">API CONFIGURATION</text>
+  <text x="612" y="662" fill="#64748b" font-size="11">ANTHROPIC_API_KEY</text>
+  <text x="750" y="662" fill="#4ade80" font-size="11">sk-ant-••••••••••••6Xzw  ✓</text>
+  <text x="612" y="680" fill="#64748b" font-size="11">OPENAI_API_KEY</text>
+  <text x="750" y="680" fill="#4ade80" font-size="11">sk-proj-••••••••••••9kRt  ✓</text>
+  <text x="1050" y="662" fill="#64748b" font-size="11">set in .env</text>
+</svg>

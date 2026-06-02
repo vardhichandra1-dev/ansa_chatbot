@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" font-family="'Segoe UI', system-ui, sans-serif">
+  <!-- Background -->
+  <rect width="1200" height="750" fill="#0f1117"/>
+
+  <!-- Top navbar -->
+  <rect width="1200" height="56" fill="#1a1d27"/>
+  <rect x="0" y="55" width="1200" height="1" fill="#2d3148"/>
+  <circle cx="32" cy="28" r="14" fill="#6366f1"/>
+  <text x="32" y="33" text-anchor="middle" fill="white" font-size="13" font-weight="700">AI</text>
+  <text x="56" y="33" fill="#e2e8f0" font-size="15" font-weight="600">Interview Copilot</text>
+  <text x="520" y="33" fill="#94a3b8" font-size="13">Live Interview</text>
+  <text x="625" y="33" fill="#6366f1" font-size="13" font-weight="600">Mock Interview</text>
+  <text x="740" y="33" fill="#94a3b8" font-size="13">Analytics</text>
+  <text x="820" y="33" fill="#94a3b8" font-size="13">Setup</text>
+
+  <!-- Session header -->
+  <text x="24" y="88" fill="#e2e8f0" font-size="18" font-weight="700">Mock Interview — Meta · ML Engineer</text>
+  <rect x="340" y="72" width="100" height="22" rx="5" fill="#f59e0b" opacity="0.15"/>
+  <text x="346" y="87" fill="#f59e0b" font-size="12">Question 3 / 8</text>
+  <text x="1060" y="88" fill="#64748b" font-size="13">⏱ 04:22 remaining</text>
+
+  <!-- ── LEFT: Chat window ────────────────────────────── -->
+  <rect x="16" y="105" width="700" height="540" rx="12" fill="#1a1d27"/>
+
+  <!-- AI question bubble -->
+  <circle cx="50" cy="145" r="18" fill="#6366f1"/>
+  <text x="50" y="151" text-anchor="middle" fill="white" font-size="12" font-weight="700">AI</text>
+  <rect x="78" y="125" width="500" height="90" rx="10" fill="#1e2235"/>
+  <text x="96" y="148" fill="#818cf8" font-size="11" font-weight="600">AI INTERVIEWER  •  00:00</text>
+  <text x="96" y="167" fill="#e2e8f0" font-size="13">You're designing the recommendation system for a short-video</text>
+  <text x="96" y="185" fill="#e2e8f0" font-size="13">platform with 500M daily active users. Walk me through your</text>
+  <text x="96" y="203" fill="#e2e8f0" font-size="13">approach to the candidate generation stage.</text>
+
+  <!-- User answer bubble -->
+  <rect x="100" y="232" width="580" height="120" rx="10" fill="#1a2540"/>
+  <rect x="100" y="232" width="4" height="120" rx="2" fill="#6366f1"/>
+  <text x="116" y="253" fill="#6366f1" font-size="11" font-weight="600">YOU  •  01:12</text>
+  <text x="116" y="272" fill="#e2e8f0" font-size="13">I'd break candidate generation into several sources. First,</text>
+  <text x="116" y="290" fill="#e2e8f0" font-size="13">collaborative filtering using user-video interaction matrix —</text>
+  <text x="116" y="308" fill="#e2e8f0" font-size="13">specifically matrix factorization or a two-tower embedding model.</text>
+  <text x="116" y="326" fill="#e2e8f0" font-size="13">Second, content-based signals from video metadata and audio...</text>
+
+  <!-- Score card for Q2 -->
+  <rect x="688" y="125" width="3" height="240" fill="#2d3148"/>
+
+  <!-- AI follow-up -->
+  <circle cx="50" cy="382" r="18" fill="#6366f1"/>
+  <text x="50" y="388" text-anchor="middle" fill="white" font-size="12" font-weight="700">AI</text>
+  <rect x="78" y="362" width="500" height="70" rx="10" fill="#1e2235"/>
+  <text x="96" y="383" fill="#818cf8" font-size="11" font-weight="600">AI INTERVIEWER  •  02:30</text>
+  <text x="96" y="402" fill="#e2e8f0" font-size="13">Good. How would you handle the cold-start problem for new</text>
+  <text x="96" y="420" fill="#e2e8f0" font-size="13">users who have no interaction history?</text>
+
+  <!-- Answer input area (currently typing) -->
+  <rect x="32" y="458" width="652" height="100" rx="10" fill="#151822" stroke="#6366f1" stroke-width="1"/>
+  <text x="52" y="480" fill="#e2e8f0" font-size="13">For cold-start users, I'd rely on demographics and onboarding</text>
+  <text x="52" y="498" fill="#e2e8f0" font-size="13">signals — device type, location, trending content in their region.</text>
+  <text x="52" y="516" fill="#e2e8f0" font-size="13">We could also use popularity-based fallback ranking</text>
+  <!-- Cursor -->
+  <rect x="52" y="524" width="7" height="13" rx="1" fill="#6366f1">
+    <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Submit row -->
+  <rect x="32" y="568" width="652" height="44" rx="0" fill="transparent"/>
+  <text x="52" y="590" fill="#64748b" font-size="11">Shift+Enter for new line</text>
+  <rect x="572" y="568" width="112" height="40" rx="8" fill="#6366f1"/>
+  <text x="628" y="592" text-anchor="middle" fill="white" font-size="13" font-weight="600">Submit →</text>
+
+  <!-- End session -->
+  <rect x="32" y="622" width="652" height="1" fill="#2d3148"/>
+  <text x="52" y="646" fill="#ef4444" font-size="12" font-weight="500">End Session Early</text>
+  <text x="540" y="646" fill="#64748b" font-size="12">5 questions remaining</text>
+
+  <!-- ── RIGHT: Score panel ──────────────────────────── -->
+  <rect x="728" y="105" width="456" height="540" rx="12" fill="#1a1d27"/>
+  <text x="752" y="133" fill="#e2e8f0" font-size="14" font-weight="600">Live Evaluation</text>
+  <text x="1100" y="133" fill="#64748b" font-size="11" text-anchor="end">Question 2 score</text>
+
+  <!-- Score donut placeholder -->
+  <circle cx="864" cy="210" r="54" fill="none" stroke="#2d3148" stroke-width="10"/>
+  <circle cx="864" cy="210" r="54" fill="none" stroke="#6366f1" stroke-width="10"
+    stroke-dasharray="271" stroke-dashoffset="68" stroke-linecap="round" transform="rotate(-90 864 210)"/>
+  <text x="864" y="205" text-anchor="middle" fill="#e2e8f0" font-size="26" font-weight="700">7.8</text>
+  <text x="864" y="224" text-anchor="middle" fill="#64748b" font-size="11">/ 10</text>
+
+  <!-- Score breakdown -->
+  <text x="752" y="292" fill="#94a3b8" font-size="12">Technical Depth</text>
+  <rect x="870" y="280" width="280" height="8" rx="4" fill="#1e2235"/>
+  <rect x="870" y="280" width="210" height="8" rx="4" fill="#6366f1"/>
+  <text x="1160" y="291" fill="#818cf8" font-size="12" text-anchor="end">8.5</text>
+
+  <text x="752" y="316" fill="#94a3b8" font-size="12">Communication</text>
+  <rect x="870" y="304" width="280" height="8" rx="4" fill="#1e2235"/>
+  <rect x="870" y="304" width="189" height="8" rx="4" fill="#22c55e"/>
+  <text x="1160" y="315" fill="#4ade80" font-size="12" text-anchor="end">7.0</text>
+
+  <text x="752" y="340" fill="#94a3b8" font-size="12">Completeness</text>
+  <rect x="870" y="328" width="280" height="8" rx="4" fill="#1e2235"/>
+  <rect x="870" y="328" width="196" height="8" rx="4" fill="#f59e0b"/>
+  <text x="1160" y="339" fill="#fbbf24" font-size="12" text-anchor="end">7.5</text>
+
+  <text x="752" y="364" fill="#94a3b8" font-size="12">Confidence</text>
+  <rect x="870" y="352" width="280" height="8" rx="4" fill="#1e2235"/>
+  <rect x="870" y="352" width="224" height="8" rx="4" fill="#0ea5e9"/>
+  <text x="1160" y="363" fill="#38bdf8" font-size="12" text-anchor="end">8.0</text>
+
+  <!-- Divider -->
+  <rect x="748" y="380" width="420" height="1" fill="#2d3148"/>
+
+  <!-- AI feedback -->
+  <text x="752" y="402" fill="#818cf8" font-size="13" font-weight="600">Feedback</text>
+  <text x="752" y="422" fill="#94a3b8" font-size="12">✓  Strong two-tower model knowledge — mentioned embedding</text>
+  <text x="752" y="440" fill="#94a3b8" font-size="12">    space and ANN retrieval correctly</text>
+  <text x="752" y="460" fill="#f59e0b" font-size="12">△  Could expand on diversity/freshness re-ranking stage</text>
+  <text x="752" y="480" fill="#f59e0b" font-size="12">△  Mention real-time vs. batch pipeline trade-offs</text>
+
+  <!-- Divider -->
+  <rect x="748" y="500" width="420" height="1" fill="#2d3148"/>
+
+  <!-- Session stats -->
+  <text x="752" y="522" fill="#64748b" font-size="12" font-weight="600">SESSION PROGRESS</text>
+  <rect x="748" y="534" width="140" height="60" rx="8" fill="#151822"/>
+  <text x="818" y="558" text-anchor="middle" fill="#e2e8f0" font-size="22" font-weight="700">7.6</text>
+  <text x="818" y="575" text-anchor="middle" fill="#64748b" font-size="11">Avg Score</text>
+
+  <rect x="900" y="534" width="120" height="60" rx="8" fill="#151822"/>
+  <text x="960" y="558" text-anchor="middle" fill="#e2e8f0" font-size="22" font-weight="700">2/8</text>
+  <text x="960" y="575" text-anchor="middle" fill="#64748b" font-size="11">Questions</text>
+
+  <rect x="1032" y="534" width="136" height="60" rx="8" fill="#151822"/>
+  <text x="1100" y="558" text-anchor="middle" fill="#4ade80" font-size="22" font-weight="700">ON TRACK</text>
+  <text x="1100" y="575" text-anchor="middle" fill="#64748b" font-size="11">vs. target 7.5</text>
+
+  <!-- Tip -->
+  <rect x="748" y="612" width="420" height="28" rx="6" fill="#1e2235"/>
+  <text x="758" y="630" fill="#64748b" font-size="11">Tip: Mention concrete numbers and trade-offs for a higher score</text>
+</svg>
