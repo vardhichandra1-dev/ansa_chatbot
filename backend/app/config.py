@@ -48,8 +48,14 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     max_upload_size_mb: int = 50
 
-    # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    # CORS — companion app opens from localhost on any port
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "null",   # file:// origin when companion is opened locally
+    ]
 
     @field_validator("cors_origins", mode="before")
     @classmethod

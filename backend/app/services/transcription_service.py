@@ -60,16 +60,29 @@ async def transcribe_file(file_path: Path) -> TranscriptionResult:
 
 def apply_speaker_labels(
     segments: list[TranscriptSegment],
+    source: str = "auto",
     speaker_map: dict[str, str] | None = None,
 ) -> list[TranscriptSegment]:
     """
-    Heuristic speaker assignment: alternates speakers based on silence gaps.
-    A real implementation would use Pyannote.audio diarization.
+    Assign speaker labels to transcript segments.
+
+    source="mic"    → all segments labeled "candidate" (known: only the candidate's mic)
+    source="system" → heuristic based on silence gaps (meeting audio, both speakers mixed)
+    source="auto"   → same heuristic as "system"
     """
     if not segments:
         return segments
 
-    labeled = []
+    # Mic-only: everything is from the candidate
+    if source == "mic":
+        return [
+            TranscriptSegment(speaker="candidate", text=seg.text,
+                              start_time=seg.start_time, end_time=seg.end_time)
+            for seg in segments
+        ]
+
+    # System / auto: heuristic alternation on silence gaps
+    labeled: list[TranscriptSegment] = []
     current_speaker = "interviewer"
     prev_end = 0.0
 

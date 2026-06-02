@@ -48,13 +48,24 @@ class LiveInterviewSession:
 
     # ── Primary entry point ─────────────────────────────────────────────────
 
-    async def ingest_audio_chunk(self, chunk: bytes, websocket: WebSocket, db: AsyncSession) -> None:
+    async def ingest_audio_chunk(
+        self,
+        chunk: bytes,
+        websocket: WebSocket,
+        db: AsyncSession,
+        source: str = "auto",
+    ) -> None:
         """
         FAST PATH (inside lock, ~1.3s):
           Whisper → speaker labels → push transcript → question detection → push question
 
         SLOW PATH (outside lock, background task, ~0.5-2s):
           follow-up rewrite + ChromaDB fetch + stream guidance
+
+        source:
+          "mic"    — candidate's microphone only; skip question detection
+          "system" — system/meeting audio (mixed); use heuristic speaker labeling
+          "auto"   — same as "system" (default)
         """
         questions_to_enrich: list[dict] = []
         conv_snapshot: list[dict] = []
@@ -70,7 +81,7 @@ class LiveInterviewSession:
             if not result.segments:
                 return
 
-            labeled = apply_speaker_labels(result.segments)
+            labeled = apply_speaker_labels(result.segments, source=source)
 
             # 2. Push transcript to client immediately
             for seg in labeled:
@@ -87,18 +98,22 @@ class LiveInterviewSession:
                     "timestamp": seg.start_time,
                 })
 
-            # 3. Only proceed if interviewer spoke
+            # 3. Mic-only source = candidate speaking; no question detection needed
+            if source == "mic":
+                return
+
+            # 4. Only proceed if interviewer spoke
             interviewer_segs = [s for s in labeled if s.speaker == "interviewer"]
             if not interviewer_segs:
                 return
 
-            # 4. Detect questions (Haiku, includes heuristic pre-filter)
+            # 5. Detect questions (Haiku, includes heuristic pre-filter)
             prev_texts = [q["text"] for q in self.detected_questions[-3:]]
             questions = await detect_questions(interviewer_segs, prev_texts)
             if not questions:
                 return
 
-            # 5. Push each question to client IMMEDIATELY (no waiting for guidance)
+            # 6. Push each question to client IMMEDIATELY (no waiting for guidance)
             for q_data in questions:
                 await _safe_send(websocket, {
                     "type": "question_detected",

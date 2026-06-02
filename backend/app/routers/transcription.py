@@ -48,7 +48,9 @@ import asyncio
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect, status
+from typing import Literal
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,6 +75,7 @@ _CHUNK_SIZE = 16_384
 async def live_interview_stream(
     websocket: WebSocket,
     interview_id: uuid.UUID,
+    source: Literal["system", "mic", "auto"] = Query(default="auto"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -90,11 +93,16 @@ async def live_interview_stream(
     session = LiveInterviewSession(interview_id)
     set_active_session(session)
 
+    # Companion sends 3-second chunks (~48KB at 128kbps webm/opus).
+    # Use a lower threshold so we don't buffer multiple chunks before processing.
+    chunk_threshold = _CHUNK_SIZE if source == "auto" else max(_CHUNK_SIZE // 2, 8_192)
+
     buffer = bytearray()
 
+    source_label = {"mic": "microphone", "system": "meeting audio", "auto": "auto-detect"}[source]
     await websocket.send_json({
         "type": "status",
-        "message": f"Connected to interview '{interview.title}'. Start speaking.",
+        "message": f"Connected to '{interview.title}'. Audio source: {source_label}. Start speaking.",
     })
 
     try:
@@ -105,11 +113,11 @@ async def live_interview_stream(
             if "bytes" in message and message["bytes"]:
                 buffer.extend(message["bytes"])
 
-                if len(buffer) >= _CHUNK_SIZE:
+                if len(buffer) >= chunk_threshold:
                     chunk = bytes(buffer)
                     buffer.clear()
                     await websocket.send_json({"type": "status", "message": "Transcribing..."})
-                    await session.ingest_audio_chunk(chunk, websocket, db)
+                    await session.ingest_audio_chunk(chunk, websocket, db, source=source)
 
             # ── Text: control message ───────────────────────────────────────
             elif "text" in message and message["text"]:
@@ -124,7 +132,7 @@ async def live_interview_stream(
                     chunk = bytes(buffer)
                     buffer.clear()
                     await websocket.send_json({"type": "status", "message": "Transcribing..."})
-                    await session.ingest_audio_chunk(chunk, websocket, db)
+                    await session.ingest_audio_chunk(chunk, websocket, db, source=source)
 
                 elif msg_type == "manual_question":
                     question_text = ctrl.get("question", "").strip()
@@ -143,7 +151,7 @@ async def live_interview_stream(
         # Flush remaining audio buffer
         if buffer:
             try:
-                await session.ingest_audio_chunk(bytes(buffer), websocket, db)
+                await session.ingest_audio_chunk(bytes(buffer), websocket, db, source=source)
             except Exception:
                 pass
 

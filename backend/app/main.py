@@ -16,10 +16,12 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.database import create_tables
@@ -72,6 +74,19 @@ app.include_router(mock_interview.router,   prefix=API)
 app.include_router(analytics.router,        prefix=API)
 
 
+# ── Companion app — served at /companion ──────────────────────────────────────
+
+_COMPANION_HTML = Path(__file__).parent.parent.parent / "companion" / "index.html"
+
+
+@app.get("/companion", tags=["companion"], include_in_schema=False)
+async def companion_app():
+    """Serve the live meeting companion web app."""
+    if _COMPANION_HTML.exists():
+        return FileResponse(_COMPANION_HTML, media_type="text/html")
+    return {"error": "Companion app not found. Run from repo root."}
+
+
 # ── Health + root ──────────────────────────────────────────────────────────────
 
 @app.get("/health", tags=["health"])
@@ -85,12 +100,14 @@ async def root():
         "service": "AI Interview Copilot",
         "version": "2.0.0",
         "docs": "/docs",
+        "companion_app": "http://localhost:8000/companion",
         "primary_feature": "WebSocket ws://localhost:8000/api/v1/transcription/live/{interview_id}",
         "quick_start": {
+            "0_open_companion":   "GET  /companion  (use during Teams/Meet/Zoom)",
             "1_upload_resume":    "POST /api/v1/resumes",
             "2_create_interview": "POST /api/v1/interviews",
-            "3_connect_ws":       "WS  /api/v1/transcription/live/{id}",
+            "3_connect_ws":       "WS   /api/v1/transcription/live/{id}?source=system|mic|auto",
             "4_stream_audio":     "Send binary audio chunks over WebSocket",
-            "5_get_guidance":     "GET /api/v1/transcription/guidance?question=...",
+            "5_get_guidance":     "GET  /api/v1/transcription/guidance?question=...",
         },
     }

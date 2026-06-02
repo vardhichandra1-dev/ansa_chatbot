@@ -11,6 +11,33 @@
 
 ---
 
+## Live Meeting Companion
+
+> Use during actual interviews on **Google Meet, Microsoft Teams, Zoom, or any video platform** — no integrations needed.
+
+![Companion App in Teams/Meet](docs/screenshots/05_companion_app.svg)
+
+Open `http://localhost:8000/companion` in a browser window and pin it alongside your video call. The companion captures meeting audio via screen share, detects questions from the interviewer, and streams AI guidance in real time — all while you stay focused on the conversation.
+
+**How to use it during a real interview:**
+1. Start the backend: `docker-compose up` or `uvicorn app.main:app`
+2. Open `http://localhost:8000/companion` in a separate browser window
+3. Select **Meeting Audio (system)** as the audio source
+4. Click **Start Live Session**
+5. When prompted to share screen/audio, select your Teams/Meet/Zoom window and **check "Share audio"**
+6. Position the companion window on a second monitor or in a corner of your screen
+7. Guidance streams automatically as the interviewer speaks
+
+**Audio source options:**
+
+| Mode | Captures | Best for |
+|---|---|---|
+| Meeting Audio (system) | All meeting audio via screen share | Default — works with any platform |
+| Microphone only | Your voice only | Tracking what you say; no question detection |
+| Both (merged) | Mic + meeting audio combined | Highest accuracy |
+
+---
+
 ## Screenshots
 
 ### Live Interview Assistant — Real-time guidance in under 2 seconds
@@ -191,6 +218,7 @@ docker-compose up --build
 
 | Service | URL |
 |---|---|
+| **Live Meeting Companion** | **http://localhost:8000/companion** |
 | API | http://localhost:8000 |
 | Interactive docs | http://localhost:8000/docs |
 | PostgreSQL | localhost:5432 |
@@ -285,7 +313,15 @@ All endpoints are under `/api/v1`. Interactive docs at `/docs`.
 
 ## WebSocket Protocol
 
-Connect to `ws://localhost:8000/api/v1/transcription/live/{interview_id}`.
+Connect to `ws://localhost:8000/api/v1/transcription/live/{interview_id}?source=system|mic|auto`.
+
+**`source` query parameter:**
+
+| Value | Behavior |
+|---|---|
+| `system` | Meeting audio (system capture) — heuristic speaker labeling, question detection active |
+| `mic` | Microphone only — all segments labeled "candidate", question detection skipped |
+| `auto` | Default — same as `system` |
 
 **Client → Server**
 
@@ -383,17 +419,19 @@ START
 - [x] Mock interview sessions with AI scoring
 - [x] Analytics dashboard + weekly AI reports
 - [x] Company prep generator (FAQ, skill gap, study plan)
+- [x] **Live meeting companion app** (`/companion`) — works with Teams, Meet, Zoom, any platform
+- [x] System audio capture via `getDisplayMedia` + meeting audio question detection
+- [x] `?source=` WebSocket param for mic / system / auto speaker labeling
 
 ### Phase 2
-- [ ] Speaker diarization (Pyannote.audio)
+- [ ] Speaker diarization (Pyannote.audio) — more accurate than silence-gap heuristic
 - [ ] Next.js frontend with real-time transcript panel
 - [ ] Interview knowledge base browser
 - [ ] Company-specific question bank with past-interview crowd data
 
 ### Phase 3
-- [ ] Desktop app (Electron) — no browser needed during interviews
-- [ ] Screen + audio capture (system audio passthrough)
-- [ ] Chrome extension overlay for video calls
+- [ ] Desktop app (Electron) — no browser needed, captures system audio natively
+- [ ] Chrome extension overlay that injects guidance directly into Meet/Teams tabs
 
 ---
 
